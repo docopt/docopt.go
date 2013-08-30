@@ -1424,6 +1424,33 @@ func TestFileTestcases(t *testing.T) {
 	}
 }
 
+func TestFileTestcasesGo(t *testing.T) {
+    filename := "test_golang.docopt"
+    file, err := os.Open(filename)
+    if err != nil {
+        t.Fatal(err)
+    }
+    defer file.Close()
+
+    for c := range parseTest(file) {
+        if c.err != nil {
+            t.Fatal(err)
+            break
+        }
+        result, _, err := Parse(c.doc, c.argv, true, "", false)
+        if _, ok := err.(*UserError); c.userError && !ok {
+            // expected a user-error
+            t.Error("testcase:", c.id, "result:", result)
+        } else if _, ok := err.(*UserError); !c.userError && ok {
+            // unexpected user-error
+            t.Error("testcase:", c.id, "error:", err, "result:", result)
+        } else if reflect.DeepEqual(c.expect, result) != true {
+            t.Error("testcase:", c.id, "result:", result)
+        }
+    }
+}
+
+
 type testcase struct {
 	id        int
 	doc       string

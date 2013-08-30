@@ -1203,11 +1203,16 @@ func stringPartition(s, sep string) (string, string, string) {
 	return split[0], sep, split[1]
 }
 
+// returns true if all cased characters in the string are uppercase
+// and there are there is at least one cased charcter
 func isStringUppercase(s string) bool {
-	for _, c := range s {
-		if !unicode.IsUpper(c) {
-			return false
-		}
-	}
-	return true
+    if strings.ToUpper(s) != s {
+        return false
+    }
+    for _, c := range []rune(s) {
+        if unicode.IsUpper(c) {
+            return true
+        }
+    }
+    return false
 }
