@@ -1,12 +1,12 @@
 package main
 
 import (
-        "fmt"
-        docopt "github.com/kbatten/docopt.go"
+	"fmt"
+	docopt "github.com/kbatten/docopt.go"
 )
 
 func main() {
-usage := `Naval Fate.
+	usage := `Naval Fate.
 
 Usage:
   naval_fate.py ship new <name>...
@@ -23,6 +23,6 @@ Options:
   --moored      Moored (anchored) mine.
   --drifting    Drifting mine.`
 
-    arguments := docopt.ParseLoud(usage, nil, true, "Naval Fate 2.0", false)
-    fmt.Println(arguments)
+	arguments, _ := docopt.Parse(usage, nil, true, "Naval Fate 2.0", false)
+	fmt.Println(arguments)
 }

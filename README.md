@@ -75,8 +75,8 @@ func docopt.ParseQuiet(doc string, argv []string, help bool, version string, opt
 package main
 
 import (
-        "fmt"
-        docopt "github.com/kbatten/docopt.go"
+    "fmt"
+    docopt "github.com/kbatten/docopt.go"
 )
 
 func main() {

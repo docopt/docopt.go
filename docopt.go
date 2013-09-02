@@ -1,10 +1,12 @@
-/*
-Based of off docopt.py: https://github.com/docopt/docopt
+// Licensed under terms of MIT license (see LICENSE-MIT)
+// Copyright (c) 2013 Keith Batten, kbatten@gmail.com
 
-Licensed under terms of MIT license (see LICENSE-MIT)
-Copyright (c) 2013 Keith Batten, kbatten@gmail.com
-*/
-
+// Package docopt creates beautiful command-line interfaces based on the
+// command help message
+//
+// Port of docopt for python
+// https://github.com/docopt/docopt
+// http://docopt.org
 package docopt
 
 import (
@@ -16,8 +18,87 @@ import (
 	"unicode"
 )
 
+// Parse `argv` based on command-line interface described in `doc`.
+//
+// docopt creates your command-line interface based on its
+// description that you pass as `doc`. Such description can contain
+// --options, <positional-argument>, commands, which could be
+// [optional], (required), (mutually | exclusive) or repeated...
+//
+// Parameters:
+//  doc : string
+//   Description of your command-line interface.
+//
+//  argv : list of string or nil
+//   Argument vector to be parsed. os.Args[1:] is used if nil.
+//
+//  help : bool (default: true)
+//   Set to false to disable automatic help on -h or --help options.
+//
+//  version : string
+//   If set to something besides an empty string, the string will be printed
+//   if --version is in argv
+//
+//  optionsFirst : bool (default: false)
+//   Set to true to require options precede positional arguments,
+//   i.e. to forbid options and positional arguments intermix.
+//
+// Returns:
+//  args : map[string]interface{}
+//   A map, where keys are names of command-line elements
+//   such as e.g. "--verbose" and "<path>", and values are the
+//   parsed values of those elements.
+//
+//  err : error, *docopt.LanguageError, *docopt.UserError
+//
+//  os.Exit on user error or help
+//
+// Example:
+//  package main
+//
+//  import (
+//      "fmt"
+//      docopt "github.com/kbatten/docopt.go"
+//  )
+//
+//  func main() {
+//      doc := `
+//  Usage:
+//    my_program tcp <host> <port> [--timeout=<seconds>]
+//    my_program serial <port> [--baud=<n>] [--timeout=<seconds>]
+//    my_program (-h | --help | --version)
+//
+//  Options:
+//    -h, --help Show this screen and exit.
+//    --baud=<n> Baudrate [default: 9600]
+//  `
+//      argv := []string{"tcp", "127.0.0.1", "80", "--timeout", "30"}
+//      fmt.Println(docopt.Parse(doc, argv, true, "", false))
+//  }
+//
+// Example output:
+//  {"--baud": "9600",
+//   "--help": false,
+//   "--timeout": "30",
+//   "--version": false,
+//   "<host>": "127.0.0.1",
+//   "<port>": "8"',
+//   "serial": false,
+//   "tcp": true}
+func Parse(doc string, argv []string, help bool, version string, optionsFirst bool) (map[string]interface{}, error) {
+	args, output, err := parse(doc, argv, help, version, optionsFirst)
+	if _, ok := err.(*UserError); ok {
+		fmt.Println(output)
+		os.Exit(1)
+	} else if len(output) > 0 && err == nil {
+		fmt.Println(output)
+		os.Exit(0)
+	}
+	return args, err
+}
+
 // parse and return a map of args, output and all errors
-func Parse(doc string, argv []string, help bool, version string, optionsFirst bool) (args map[string]interface{}, output string, err error) {
+func parse(doc string, argv []string, help bool, version string, optionsFirst bool) (args map[string]interface{}, output string, err error) {
 	if argv == nil && len(os.Args) > 1 {
 		argv = os.Args[1:]
 	}
@@ -41,19 +122,19 @@ func Parse(doc string, argv []string, help bool, version string, optionsFirst bo
 		return
 	}
 
-	patternArgv, err := parseArgv(newTokenList(argv, ERROR_USER), &options, optionsFirst)
+	patternArgv, err := parseArgv(newTokenList(argv, errorUser), &options, optionsFirst)
 	if err != nil {
 		output = handleError(err, usage)
 		return
 	}
-	patFlat, err := pat.flat(PATTERN_OPTION)
+	patFlat, err := pat.flat(patternOption)
 	if err != nil {
 		output = handleError(err, usage)
 		return
 	}
 	patternOptions := patFlat.unique()
 
-	patFlat, err = pat.flat(PATTERN_OPTIONSSHORTCUT)
+	patFlat, err = pat.flat(patternOptionSSHORTCUT)
 	if err != nil {
 		output = handleError(err, usage)
 		return
@@ -74,7 +155,7 @@ func Parse(doc string, argv []string, help bool, version string, optionsFirst bo
 	}
 	matched, left, collected := pat.match(&patternArgv, nil)
 	if matched && len(*left) == 0 {
-		patFlat, err = pat.flat(PATTERN_DEFAULT)
+		patFlat, err = pat.flat(patternDefault)
 		if err != nil {
 			output = handleError(err, usage)
 			return
@@ -86,43 +167,6 @@ func Parse(doc string, argv []string, help bool, version string, optionsFirst bo
 	err = newUserError("")
 	output = handleError(err, usage)
 	return
-}
-
-// parse just doc and return a map of args
-// handle all printing and non-fatal errors
-// panic on fatal errors
-// exit on user error or help
-func ParseEasy(doc string) map[string]interface{} {
-	return ParseLoud(doc, nil, true, "", false)
-}
-
-// parse and return a map of args and fatal errors
-// handle printing of help
-// exit on user error or help
-func ParseQuiet(doc string, argv []string, help bool, version string, optionsFirst bool) (map[string]interface{}, error) {
-	args, output, err := Parse(doc, argv, help, version, optionsFirst)
-	if _, ok := err.(*UserError); ok {
-		fmt.Println(output)
-		os.Exit(1)
-	} else if len(output) > 0 && err == nil {
-		fmt.Println(output)
-		os.Exit(0)
-	}
-	return args, err
-}
-
-// parse and return a map of args
-// handle all printing and non-fatal errors
-// panic on fatal errors
-// exit on user error or help
-func ParseLoud(doc string, argv []string, help bool, version string, optionsFirst bool) map[string]interface{} {
-	args, err := ParseQuiet(doc, argv, help, version, optionsFirst)
-	if _, ok := err.(*LanguageError); ok {
-		panic(fmt.Sprintf("(language) %s", err))
-	} else if err != nil {
-		panic(fmt.Sprintf("(internal) %s", err))
-	}
-	return args
 }
 
 func handleError(err error, usage string) string {
@@ -353,7 +397,7 @@ func parseLong(tokens *tokenList, options *patternList) (patternList, error) {
 			similar = append(similar, o)
 		}
 	}
-	if tokens.err == ERROR_USER && len(similar) == 0 { // if no exact match
+	if tokens.err == errorUser && len(similar) == 0 { // if no exact match
 		similar = patternList{}
 		for _, o := range *options {
 			if strings.HasPrefix(o.long, long) {
@@ -374,7 +418,7 @@ func parseLong(tokens *tokenList, options *patternList) (patternList, error) {
 		}
 		opt = newOption("", long, argcount, false)
 		*options = append(*options, opt)
-		if tokens.err == ERROR_USER {
+		if tokens.err == errorUser {
 			var val interface{}
 			if argcount > 0 {
 				val = value
@@ -400,7 +444,7 @@ func parseLong(tokens *tokenList, options *patternList) (patternList, error) {
 				}
 			}
 		}
-		if tokens.err == ERROR_USER {
+		if tokens.err == errorUser {
 			if value != nil {
 				opt.value = value
 			} else {
@@ -435,7 +479,7 @@ func parseShorts(tokens *tokenList, options *patternList) (patternList, error) {
 		} else if len(similar) < 1 {
 			opt = newOption(short, "", 0, false)
 			*options = append(*options, opt)
-			if tokens.err == ERROR_USER {
+			if tokens.err == errorUser {
 				opt = newOption(short, "", 0, true)
 			}
 		} else { // why copying is necessary here?
@@ -452,7 +496,7 @@ func parseShorts(tokens *tokenList, options *patternList) (patternList, error) {
 					left = ""
 				}
 			}
-			if tokens.err == ERROR_USER {
+			if tokens.err == errorUser {
 				if value != nil {
 					opt.value = value
 				} else {
@@ -467,16 +511,16 @@ func parseShorts(tokens *tokenList, options *patternList) (patternList, error) {
 
 func newTokenList(source []string, err errorType) *tokenList {
 	errorFunc := newError
-	if err == ERROR_USER {
+	if err == errorUser {
 		errorFunc = newUserError
-	} else if err == ERROR_LANGUAGE {
+	} else if err == errorLanguage {
 		errorFunc = newLanguageError
 	}
 	return &tokenList{source, errorFunc, err}
 }
 
 func tokenListFromString(source string) *tokenList {
-	return newTokenList(strings.Fields(source), ERROR_USER)
+	return newTokenList(strings.Fields(source), errorUser)
 }
 
 func tokenListFromPattern(source string) *tokenList {
@@ -495,7 +539,7 @@ func tokenListFromPattern(source string) *tokenList {
 			result = append(result, match[i][1])
 		}
 	}
-	return newTokenList(result, ERROR_LANGUAGE)
+	return newTokenList(result, errorLanguage)
 }
 
 func formalUsage(section string) string {
@@ -536,16 +580,16 @@ func extras(help bool, version string, options patternList, doc string) string {
 type errorType int
 
 const (
-	ERROR_USER errorType = iota
-	ERROR_LANGUAGE
+	errorUser errorType = iota
+	errorLanguage
 )
 
 func (self errorType) String() string {
 	switch self {
-	case ERROR_USER:
-		return "userError"
-	case ERROR_LANGUAGE:
-		return "languageError"
+	case errorUser:
+		return "errorUser"
+	case errorLanguage:
+		return "errorLanguage"
 	}
 	return ""
 }
@@ -651,54 +695,54 @@ type patternType uint
 
 const (
 	// leaf
-	PATTERN_ARGUMENT patternType = 1 << iota
-	PATTERN_COMMAND
-	PATTERN_OPTION
+	patternArgument patternType = 1 << iota
+	patternCommand
+	patternOption
 
 	// branch
-	PATTERN_REQUIRED
-	PATTERN_OPTIONAL
-	PATTERN_OPTIONSSHORTCUT // Marker/placeholder for [options] shortcut.
-	PATTERN_ONEORMORE
-	PATTERN_EITHER
+	patternRequired
+	patternOptionAL
+	patternOptionSSHORTCUT // Marker/placeholder for [options] shortcut.
+	patternOneOrMore
+	patternEither
 
-	PATTERN_LEAF = PATTERN_ARGUMENT +
-		PATTERN_COMMAND +
-		PATTERN_OPTION
-	PATTERN_BRANCH = PATTERN_REQUIRED +
-		PATTERN_OPTIONAL +
-		PATTERN_OPTIONSSHORTCUT +
-		PATTERN_ONEORMORE +
-		PATTERN_EITHER
-	PATTERN_ALL     = PATTERN_LEAF + PATTERN_BRANCH
-	PATTERN_DEFAULT = 0
+	patternLeaf = patternArgument +
+		patternCommand +
+		patternOption
+	patternBranch = patternRequired +
+		patternOptionAL +
+		patternOptionSSHORTCUT +
+		patternOneOrMore +
+		patternEither
+	patternAll     = patternLeaf + patternBranch
+	patternDefault = 0
 )
 
 func (self patternType) String() string {
 	switch self {
-	case PATTERN_ARGUMENT:
+	case patternArgument:
 		return "argument"
-	case PATTERN_COMMAND:
+	case patternCommand:
 		return "command"
-	case PATTERN_OPTION:
+	case patternOption:
 		return "option"
-	case PATTERN_REQUIRED:
+	case patternRequired:
 		return "required"
-	case PATTERN_OPTIONAL:
+	case patternOptionAL:
 		return "optional"
-	case PATTERN_OPTIONSSHORTCUT:
+	case patternOptionSSHORTCUT:
 		return "optionsshortcut"
-	case PATTERN_ONEORMORE:
+	case patternOneOrMore:
 		return "oneormore"
-	case PATTERN_EITHER:
+	case patternEither:
 		return "either"
-	case PATTERN_LEAF:
+	case patternLeaf:
 		return "leaf"
-	case PATTERN_BRANCH:
+	case patternBranch:
 		return "branch"
-	case PATTERN_ALL:
+	case patternAll:
 		return "all"
-	case PATTERN_DEFAULT:
+	case patternDefault:
 		return "default"
 	}
 	return ""
@@ -728,24 +772,24 @@ func newBranchPattern(t patternType, pl ...*pattern) *pattern {
 }
 
 func newRequired(pl ...*pattern) *pattern {
-	return newBranchPattern(PATTERN_REQUIRED, pl...)
+	return newBranchPattern(patternRequired, pl...)
 }
 
 func newEither(pl ...*pattern) *pattern {
-	return newBranchPattern(PATTERN_EITHER, pl...)
+	return newBranchPattern(patternEither, pl...)
 }
 
 func newOneOrMore(pl ...*pattern) *pattern {
-	return newBranchPattern(PATTERN_ONEORMORE, pl...)
+	return newBranchPattern(patternOneOrMore, pl...)
 }
 
 func newOptional(pl ...*pattern) *pattern {
-	return newBranchPattern(PATTERN_OPTIONAL, pl...)
+	return newBranchPattern(patternOptionAL, pl...)
 }
 
 func newOptionsShortcut() *pattern {
 	var p pattern
-	p.t = PATTERN_OPTIONSSHORTCUT
+	p.t = patternOptionSSHORTCUT
 	return &p
 }
 
@@ -760,13 +804,13 @@ func newLeafPattern(t patternType, name string, value interface{}) *pattern {
 
 func newArgument(name string, value interface{}) *pattern {
 	// default: value=nil
-	return newLeafPattern(PATTERN_ARGUMENT, name, value)
+	return newLeafPattern(patternArgument, name, value)
 }
 
 func newCommand(name string, value interface{}) *pattern {
 	// default: value=false
 	var p pattern
-	p.t = PATTERN_COMMAND
+	p.t = patternCommand
 	p.name = name
 	p.value = value
 	return &p
@@ -775,7 +819,7 @@ func newCommand(name string, value interface{}) *pattern {
 func newOption(short, long string, argcount int, value interface{}) *pattern {
 	// default: "", "", 0, false
 	var p pattern
-	p.t = PATTERN_OPTION
+	p.t = patternOption
 	p.short = short
 	p.long = long
 	if long != "" {
@@ -793,9 +837,9 @@ func newOption(short, long string, argcount int, value interface{}) *pattern {
 }
 
 func (self *pattern) flat(types patternType) (patternList, error) {
-	if self.t&PATTERN_LEAF != 0 {
-		if types == PATTERN_DEFAULT {
-			types = PATTERN_ALL
+	if self.t&patternLeaf != 0 {
+		if types == patternDefault {
+			types = patternAll
 		}
 		if self.t&types != 0 {
 			return patternList{self}, nil
@@ -803,7 +847,7 @@ func (self *pattern) flat(types patternType) (patternList, error) {
 		return patternList{}, nil
 	}
 
-	if self.t&PATTERN_BRANCH != 0 {
+	if self.t&patternBranch != 0 {
 		if self.t&types != 0 {
 			return patternList{self}, nil
 		}
@@ -831,18 +875,18 @@ func (self *pattern) fix() error {
 
 func (self *pattern) fixIdentities(uniq patternList) error {
 	// Make pattern-tree tips point to same object if they are equal.
-	if self.t&PATTERN_BRANCH == 0 {
+	if self.t&patternBranch == 0 {
 		return nil
 	}
 	if uniq == nil {
-		selfFlat, err := self.flat(PATTERN_DEFAULT)
+		selfFlat, err := self.flat(patternDefault)
 		if err != nil {
 			return err
 		}
 		uniq = selfFlat.unique()
 	}
 	for i, child := range self.children {
-		if child.t&PATTERN_BRANCH == 0 {
+		if child.t&patternBranch == 0 {
 			ind, err := uniq.index(child)
 			if err != nil {
 				return err
@@ -873,7 +917,7 @@ func (self *pattern) fixRepeatingArguments() {
 			}
 		}
 		for _, e := range casMultiple {
-			if e.t == PATTERN_ARGUMENT || e.t == PATTERN_OPTION && e.argcount > 0 {
+			if e.t == patternArgument || e.t == patternOption && e.argcount > 0 {
 				switch e.value.(type) {
 				case string:
 					e.value = strings.Fields(e.value.(string))
@@ -882,7 +926,7 @@ func (self *pattern) fixRepeatingArguments() {
 					e.value = []string{}
 				}
 			}
-			if e.t == PATTERN_COMMAND || e.t == PATTERN_OPTION && e.argcount == 0 {
+			if e.t == patternCommand || e.t == patternOption && e.argcount == 0 {
 				e.value = 0
 			}
 		}
@@ -893,7 +937,7 @@ func (self *pattern) match(left *patternList, collected *patternList) (bool, *pa
 	if collected == nil {
 		collected = &patternList{}
 	}
-	if self.t&PATTERN_REQUIRED != 0 {
+	if self.t&patternRequired != 0 {
 		l := left
 		c := collected
 		for _, p := range self.children {
@@ -904,12 +948,12 @@ func (self *pattern) match(left *patternList, collected *patternList) (bool, *pa
 			}
 		}
 		return true, l, c
-	} else if self.t&PATTERN_OPTIONAL != 0 || self.t&PATTERN_OPTIONSSHORTCUT != 0 {
+	} else if self.t&patternOptionAL != 0 || self.t&patternOptionSSHORTCUT != 0 {
 		for _, p := range self.children {
 			_, left, collected = p.match(left, collected)
 		}
 		return true, left, collected
-	} else if self.t&PATTERN_ONEORMORE != 0 {
+	} else if self.t&patternOneOrMore != 0 {
 		if len(self.children) != 1 {
 			panic("OneOrMore.match(): assert len(self.children) == 1")
 		}
@@ -933,7 +977,7 @@ func (self *pattern) match(left *patternList, collected *patternList) (bool, *pa
 			return true, l, c
 		}
 		return false, left, collected
-	} else if self.t&PATTERN_EITHER != 0 {
+	} else if self.t&patternEither != 0 {
 		type outcomeStruct struct {
 			matched   bool
 			left      *patternList
@@ -959,7 +1003,7 @@ func (self *pattern) match(left *patternList, collected *patternList) (bool, *pa
 			return outcomes[minIndex].matched, outcomes[minIndex].left, outcomes[minIndex].collected
 		}
 		return false, left, collected
-	} else if self.t&PATTERN_LEAF != 0 {
+	} else if self.t&patternLeaf != 0 {
 		pos, match := self.singleMatch(left)
 		var increment interface{}
 		if match == nil {
@@ -1013,16 +1057,16 @@ func (self *pattern) match(left *patternList, collected *patternList) (bool, *pa
 }
 
 func (self *pattern) singleMatch(left *patternList) (int, *pattern) {
-	if self.t&PATTERN_ARGUMENT != 0 {
+	if self.t&patternArgument != 0 {
 		for n, p := range *left {
-			if p.t&PATTERN_ARGUMENT != 0 {
+			if p.t&patternArgument != 0 {
 				return n, newArgument(self.name, p.value)
 			}
 		}
 		return -1, nil
-	} else if self.t&PATTERN_COMMAND != 0 {
+	} else if self.t&patternCommand != 0 {
 		for n, p := range *left {
-			if p.t&PATTERN_ARGUMENT != 0 {
+			if p.t&patternArgument != 0 {
 				if p.value == self.name {
 					return n, newCommand(self.name, true)
 				} else {
@@ -1031,7 +1075,7 @@ func (self *pattern) singleMatch(left *patternList) (int, *pattern) {
 			}
 		}
 		return -1, nil
-	} else if self.t&PATTERN_OPTION != 0 {
+	} else if self.t&patternOption != 0 {
 		for n, p := range *left {
 			if self.name == p.name {
 				return n, p
@@ -1044,11 +1088,11 @@ func (self *pattern) singleMatch(left *patternList) (int, *pattern) {
 }
 
 func (self *pattern) String() string {
-	if self.t&PATTERN_OPTION != 0 {
+	if self.t&patternOption != 0 {
 		return fmt.Sprintf("%s(%s, %s, %d, %+v)", self.t, self.short, self.long, self.argcount, self.value)
-	} else if self.t&PATTERN_LEAF != 0 {
+	} else if self.t&patternLeaf != 0 {
 		return fmt.Sprintf("%s(%s, %+v)", self.t, self.name, self.value)
-	} else if self.t&PATTERN_BRANCH != 0 {
+	} else if self.t&patternBranch != 0 {
 		result := ""
 		for i, child := range self.children {
 			if i > 0 {
@@ -1071,11 +1115,11 @@ func (self *pattern) transform() *pattern {
 	*/
 	result := []patternList{}
 	groups := []patternList{patternList{self}}
-	parents := PATTERN_REQUIRED +
-		PATTERN_OPTIONAL +
-		PATTERN_OPTIONSSHORTCUT +
-		PATTERN_EITHER +
-		PATTERN_ONEORMORE
+	parents := patternRequired +
+		patternOptionAL +
+		patternOptionSSHORTCUT +
+		patternEither +
+		patternOneOrMore
 	for len(groups) > 0 {
 		children := groups[0]
 		groups = groups[1:]
@@ -1088,14 +1132,14 @@ func (self *pattern) transform() *pattern {
 		}
 		if child != nil {
 			children.remove(child)
-			if child.t&PATTERN_EITHER != 0 {
+			if child.t&patternEither != 0 {
 				for _, c := range child.children {
 					r := patternList{}
 					r = append(r, c)
 					r = append(r, children...)
 					groups = append(groups, r)
 				}
-			} else if child.t&PATTERN_ONEORMORE != 0 {
+			} else if child.t&patternOneOrMore != 0 {
 				r := patternList{}
 				r = append(r, child.children.double()...)
 				r = append(r, children...)
@@ -1206,13 +1250,13 @@ func stringPartition(s, sep string) (string, string, string) {
 // returns true if all cased characters in the string are uppercase
 // and there are there is at least one cased charcter
 func isStringUppercase(s string) bool {
-    if strings.ToUpper(s) != s {
-        return false
-    }
-    for _, c := range []rune(s) {
-        if unicode.IsUpper(c) {
-            return true
-        }
-    }
-    return false
+	if strings.ToUpper(s) != s {
+		return false
+	}
+	for _, c := range []rune(s) {
+		if unicode.IsUpper(c) {
+			return true
+		}
+	}
+	return false
 }
