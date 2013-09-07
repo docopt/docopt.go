@@ -1204,7 +1204,7 @@ func TestCountMultipleFlags(t *testing.T) {
 	if v, _, err := parse("usage: prog [-v]", []string{"-v"}, true, "", false); reflect.DeepEqual(v, map[string]interface{}{"-v": true}) != true {
 		t.Error(err)
 	}
-	if v, _, err := parse("usage: prog [-vv]", nil, true, "", false); reflect.DeepEqual(v, map[string]interface{}{"-v": 0}) != true {
+	if v, _, err := parse("usage: prog [-vv]", []string{}, true, "", false); reflect.DeepEqual(v, map[string]interface{}{"-v": 0}) != true {
 		t.Error(err)
 	}
 	if v, _, err := parse("usage: prog [-vv]", []string{"-v"}, true, "", false); reflect.DeepEqual(v, map[string]interface{}{"-v": 1}) != true {
