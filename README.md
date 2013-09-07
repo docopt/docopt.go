@@ -5,7 +5,7 @@ Golang implementation of [docopt](http://docopt.org/) 0.6.1+fix
 
 ## Installation
 
-import "github.com/kbatten/docopt.go" and then run `go get`.
+import "github.com/docopt/docopt.go" and then run `go get`.
 
 ## API
 
@@ -76,7 +76,7 @@ package main
 
 import (
     "fmt"
-    docopt "github.com/kbatten/docopt.go"
+    docopt "github.com/docopt/docopt.go"
 )
 
 func main() {
