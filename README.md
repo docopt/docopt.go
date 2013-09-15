@@ -9,65 +9,34 @@ import "github.com/docopt/docopt.go" and then run `go get`.
 
 ## API
 
-*These may be updated because it seems like a cumbersome way to get around optional parameters*
-
 ``` go
 func docopt.Parse(doc string, argv []string, help bool, version string, optionsFirst bool)
-(args map[string]interface{}, output string, err error)
-```
-- parse and return a map of args, output and all errors
-
-``` go
-func docopt.ParseEasy(doc string)
-args map[string]interface{}
-```
-- parse just doc and return a map of args
-- handle all printing and non-fatal errors
-- panic on fatal errors
-- exit on user error or help
-
-``` go
-func docopt.ParseLoud(doc string, argv []string, help bool, version string, optionsFirst bool)
-args map[string]interface{}
-```
-
-- parse and return a map of args
-- handle all printing and non-fatal errors
-- panic on fatal errors
-- exit on user error or help
-
-``` go
-func docopt.ParseQuiet(doc string, argv []string, help bool, version string, optionsFirst bool)
 (args map[string]interface{}, err error)
 ```
 
-- parse and return a map of args and fatal errors
-- handle printing of help
-- exit on user error or help
+Parse `argv` based on command-line interface described in `doc`.
+
+docopt creates your command-line interface based on its description that you pass as `doc`. Such description can contain --options, <positional-argument>, commands, which could be [optional], (required), (mutually | exclusive) or repeated...
 
 ### arguments
 
-`doc`, usage string based on docopt language.
+`doc` Description of your command-line interface.
 
-`argv`, optional argument vector. set to `nil` to use os.Args.
+`argv` Argument vector to be parsed. os.Args[1:] is used if nil.
 
-`help`, set to `true` to have docopt automatically handle `-h` and `--help`.
+`help` Set to false to disable automatic help on -h or --help options..
 
-`version`, set to a non-empty string that will automatically be shown with `--version`.
+`version` If set to something besides an empty string, the string will be printed
+ if --version is in argv.
 
-`optionsFirst`, set to `true` to disallow mixing options and positional arguments.
+`optionsFirst` Set to true to require options precede positional arguments,
+ i.e. to forbid options and positional arguments intermix..
 
 ### return values
 
-`args`, map[string]interface{}. interface{} can be `bool`, `int`, `string`, `[]string`.
+`args`, map[string]interface{}. A map, where keys are names of command-line elements such as e.g. "--verbose" and "<path>", and values are the  parsed values of those elements. interface{} can be `bool`, `int`, `string`, `[]string`.
 
-`output`, help output that would normally be displayed by the other `docopt.Parse*` functions.
-
-`err`
-
-- `nil`, no error
-- `*docopt.UserError`, user argument error
-- `*docopt.LanguageError`, developer error
+`err`, error. Either *docopt.LanguageError, *docopt.UserError or nil
 
 ## Example
 
@@ -97,7 +66,7 @@ Options:
   --moored      Moored (anchored) mine.
   --drifting    Drifting mine.`
 
-    arguments := docopt.ParseLoud(usage, nil, true, "Naval Fate 2.0", false)
+    arguments, _ := docopt.Parse(usage, nil, true, "Naval Fate 2.0", false)
     fmt.Println(arguments)
 }
 ```
