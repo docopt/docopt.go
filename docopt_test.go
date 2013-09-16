@@ -8,11 +8,10 @@ Copyright (c) 2013 Keith Batten, kbatten@gmail.com
 package docopt
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"os"
 	"reflect"
 	"regexp"
@@ -1399,53 +1398,28 @@ func TestIssue126DefaultsNotParsedCorrectlyWhenTabs(t *testing.T) {
 
 // conf file based test cases
 func TestFileTestcases(t *testing.T) {
-	filename := "testcases.docopt"
-	file, err := os.Open(filename)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer file.Close()
-
-	for c := range parseTest(file) {
-		if c.err != nil {
+	filenames := []string{"testcases.docopt", "test_golang.docopt"}
+	for _, filename := range filenames {
+		raw, err := ioutil.ReadFile(filename)
+		if err != nil {
 			t.Fatal(err)
-			break
 		}
-		result, _, err := parse(c.doc, c.argv, true, "", false)
-		if _, ok := err.(*UserError); c.userError && !ok {
-			// expected a user-error
-			t.Error("testcase:", c.id, "result:", result)
-		} else if _, ok := err.(*UserError); !c.userError && ok {
-			// unexpected user-error
-			t.Error("testcase:", c.id, "error:", err, "result:", result)
-		} else if reflect.DeepEqual(c.expect, result) != true {
-			t.Error("testcase:", c.id, "result:", result)
-		}
-	}
-}
 
-func TestFileTestcasesGo(t *testing.T) {
-	filename := "test_golang.docopt"
-	file, err := os.Open(filename)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer file.Close()
-
-	for c := range parseTest(file) {
-		if c.err != nil {
+		tests, err := parseTest(raw)
+		if err != nil {
 			t.Fatal(err)
-			break
 		}
-		result, _, err := parse(c.doc, c.argv, true, "", false)
-		if _, ok := err.(*UserError); c.userError && !ok {
-			// expected a user-error
-			t.Error("testcase:", c.id, "result:", result)
-		} else if _, ok := err.(*UserError); !c.userError && ok {
-			// unexpected user-error
-			t.Error("testcase:", c.id, "error:", err, "result:", result)
-		} else if reflect.DeepEqual(c.expect, result) != true {
-			t.Error("testcase:", c.id, "result:", result)
+		for _, c := range tests {
+			result, _, err := parse(c.doc, c.argv, true, "", false)
+			if _, ok := err.(*UserError); c.userError && !ok {
+				// expected a user-error
+				t.Error("testcase:", c.id, "result:", result)
+			} else if _, ok := err.(*UserError); !c.userError && ok {
+				// unexpected user-error
+				t.Error("testcase:", c.id, "error:", err, "result:", result)
+			} else if reflect.DeepEqual(c.expect, result) != true {
+				t.Error("testcase:", c.id, "result:", result, "expect:", c.expect)
+			}
 		}
 	}
 }
@@ -1457,96 +1431,60 @@ type testcase struct {
 	argv      []string
 	expect    map[string]interface{}
 	userError bool
-	err       error
 }
 
-func parseTest(raw io.Reader) <-chan testcase {
-	c := make(chan testcase)
+func parseTest(raw []byte) ([]testcase, error) {
+	var res []testcase
+	commentPattern := regexp.MustCompile("#.*")
+	raw = commentPattern.ReplaceAll(raw, []byte(""))
+	raw = bytes.TrimSpace(raw)
+	if bytes.HasPrefix(raw, []byte(`"""`)) {
+		raw = raw[3:]
+	}
 
-	go func() {
-		scanner := bufio.NewScanner(raw)
-		commentPattern := regexp.MustCompile("#.*($|\n)")
-		scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-			// look for matching `r"""` or `r"""`+EOF
-			sep := []byte(`r"""`)
-			count := bytes.Count(data, sep)
-			start := bytes.Index(data, sep)
-			end := len(data)
-
-			if atEOF && count == 0 {
-				// no more matches, so consume everything
-				return end, nil, nil
+	id := 0
+	for _, fixture := range bytes.Split(raw, []byte(`r"""`)) {
+		doc, _, body := stringPartition(string(fixture), `"""`)
+		for _, cas := range strings.Split(body, "$")[1:] {
+			argvString, _, expectString := stringPartition(strings.TrimSpace(cas), "\n")
+			prog, _, argvString := stringPartition(strings.TrimSpace(argvString), " ")
+			argv := []string{}
+			if len(argvString) > 0 {
+				argv = strings.Fields(argvString)
 			}
-			if atEOF && count == 1 {
-				// already matched up to end
-			} else if count >= 2 {
-				end = start + len(sep) + bytes.Index(data[start+len(sep):], sep)
-			} else {
-				// haven't found a match yet so ask for more data
-				return 0, nil, nil
+			var expectUntyped interface{}
+			err := json.Unmarshal([]byte(expectString), &expectUntyped)
+			if err != nil {
+				return nil, err
 			}
-			token = data[start:end]
-			token = commentPattern.ReplaceAllLiteral(token, []byte(""))
-			return end, token, nil
-		})
-
-		for id := 0; scanner.Scan(); {
-			data := scanner.Bytes()
-
-			offset := 4
-			end := offset + bytes.Index(data[offset:], []byte(`"""`))
-			doc := string(data[offset:end])
-			offset = end + 3
-
-			for offset < len(data) {
-				offset = offset + bytes.Index(data[offset:], []byte(`$ `)) + 2
-				end = offset + bytes.Index(data[offset:], []byte("\n"))
-				prog, _, args := stringPartition(string(data[offset:end]), " ")
-				argv := strings.Fields(args)
-				offset = end + 1
-
-				if bytes.Contains(data[offset:], []byte("$ ")) {
-					end = offset + bytes.Index(data[offset:], []byte("$ "))
-				} else {
-					end = len(data)
-				}
-				var expectUntyped interface{}
-				err := json.Unmarshal(data[offset:end], &expectUntyped)
-				offset = end
-
-				if err != nil {
-					c <- testcase{id, doc, prog, argv, nil, false, err}
-					break
-				}
-
-				switch expect := expectUntyped.(type) {
-				case string: // user-error
-					c <- testcase{id, doc, prog, argv, nil, true, nil}
-				case map[string]interface{}:
-					// convert []interface{} values to []string
-					// convert float64 values to int
-					for k, vUntyped := range expect {
-						switch v := vUntyped.(type) {
-						case []interface{}:
-							itemList := make([]string, len(v))
-							for i, itemUntyped := range v {
-								if item, ok := itemUntyped.(string); ok {
-									itemList[i] = item
-								}
+			switch expect := expectUntyped.(type) {
+			case string: // user-error
+				res = append(res, testcase{id, doc, prog, argv, nil, true})
+			case map[string]interface{}:
+				// convert []interface{} values to []string
+				// convert float64 values to int
+				for k, vUntyped := range expect {
+					switch v := vUntyped.(type) {
+					case []interface{}:
+						itemList := make([]string, len(v))
+						for i, itemUntyped := range v {
+							if item, ok := itemUntyped.(string); ok {
+								itemList[i] = item
 							}
-							expect[k] = itemList
-						case float64:
-							expect[k] = int(v)
 						}
+						expect[k] = itemList
+					case float64:
+						expect[k] = int(v)
 					}
-					c <- testcase{id, doc, prog, argv, expect, false, nil}
 				}
-				id++
+				res = append(res, testcase{id, doc, prog, argv, expect, false})
+			default:
+				return nil, fmt.Errorf("unhandled json data type")
 			}
+			id++
 		}
-		close(c)
-	}()
-	return c
+	}
+	return res, nil
 }
 
 var debugEnabled = false
