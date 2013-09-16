@@ -151,9 +151,13 @@ func TestFormalUsage(t *testing.T) {
     prog is a program`
 	usage := parseSection("usage:", doc)[0]
 	if usage != "Usage: prog [-hv] ARG\n           prog N M" {
-		t.Error()
+		t.Fatal()
 	}
-	if formalUsage(usage) != "( [-hv] ARG ) | ( N M )" {
+	formal, err := formalUsage(usage)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if formal != "( [-hv] ARG ) | ( N M )" {
 		t.Error()
 	}
 	return

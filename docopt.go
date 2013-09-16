@@ -116,7 +116,13 @@ func parse(doc string, argv []string, help bool, version string, optionsFirst bo
 	usage := usageSections[0]
 
 	options := parseDefaults(doc)
-	pat, err := parsePattern(formalUsage(usage), &options)
+	formal, err := formalUsage(usage)
+	if err != nil {
+		output = handleError(err, usage)
+		return
+	}
+
+	pat, err := parsePattern(formal, &options)
 	if err != nil {
 		output = handleError(err, usage)
 		return
@@ -542,9 +548,13 @@ func tokenListFromPattern(source string) *tokenList {
 	return newTokenList(result, errorLanguage)
 }
 
-func formalUsage(section string) string {
+func formalUsage(section string) (string, error) {
 	_, _, section = stringPartition(section, ":") // drop "usage:"
 	pu := strings.Fields(section)
+
+	if len(pu) == 0 {
+		return "", newLanguageError("no fields found in usage (perhaps a spacing error).")
+	}
 
 	result := "( "
 	for _, s := range pu[1:] {
@@ -556,7 +566,7 @@ func formalUsage(section string) string {
 	}
 	result += ")"
 
-	return result
+	return result, nil
 }
 
 func extras(help bool, version string, options patternList, doc string) string {
