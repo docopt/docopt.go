@@ -594,8 +594,8 @@ const (
 	errorLanguage
 )
 
-func (self errorType) String() string {
-	switch self {
+func (e errorType) String() string {
+	switch e {
 	case errorUser:
 		return "errorUser"
 	case errorLanguage:
@@ -604,6 +604,7 @@ func (self errorType) String() string {
 	return ""
 }
 
+// UserError records an error with program arguments.
 type UserError struct {
 	msg   string
 	Usage string
@@ -616,6 +617,7 @@ func newUserError(msg string, f ...interface{}) error {
 	return &UserError{fmt.Sprintf(msg, f...), ""}
 }
 
+// LanguageError records an error with the doc string.
 type LanguageError struct {
 	msg string
 }
@@ -636,66 +638,66 @@ type tokenList struct {
 }
 type token string
 
-func (self *token) eq(s string) bool {
-	if self == nil {
+func (t *token) eq(s string) bool {
+	if t == nil {
 		return false
 	}
-	return string(*self) == s
+	return string(*t) == s
 }
-func (self *token) match(matchNil bool, tokenStrings ...string) bool {
-	if self == nil && matchNil {
+func (t *token) match(matchNil bool, tokenStrings ...string) bool {
+	if t == nil && matchNil {
 		return true
-	} else if self == nil && !matchNil {
+	} else if t == nil && !matchNil {
 		return false
 	}
 
-	for _, t := range tokenStrings {
-		if t == string(*self) {
+	for _, tok := range tokenStrings {
+		if tok == string(*t) {
 			return true
 		}
 	}
 	return false
 }
-func (self *token) hasPrefix(prefix string) bool {
-	if self == nil {
+func (t *token) hasPrefix(prefix string) bool {
+	if t == nil {
 		return false
 	}
-	return strings.HasPrefix(string(*self), prefix)
+	return strings.HasPrefix(string(*t), prefix)
 }
-func (self *token) hasSuffix(suffix string) bool {
-	if self == nil {
+func (t *token) hasSuffix(suffix string) bool {
+	if t == nil {
 		return false
 	}
-	return strings.HasSuffix(string(*self), suffix)
+	return strings.HasSuffix(string(*t), suffix)
 }
-func (self *token) isUpper() bool {
-	if self == nil {
+func (t *token) isUpper() bool {
+	if t == nil {
 		return false
 	}
-	return isStringUppercase(string(*self))
+	return isStringUppercase(string(*t))
 }
-func (self *token) String() string {
-	if self == nil {
+func (t *token) String() string {
+	if t == nil {
 		return ""
 	}
-	return string(*self)
+	return string(*t)
 }
 
-func (self *tokenList) current() *token {
-	if len(self.tokens) > 0 {
-		return (*token)(&(self.tokens[0]))
+func (tl *tokenList) current() *token {
+	if len(tl.tokens) > 0 {
+		return (*token)(&(tl.tokens[0]))
 	}
 	return nil
 }
 
-func (self *tokenList) length() int {
-	return len(self.tokens)
+func (tl *tokenList) length() int {
+	return len(tl.tokens)
 }
 
-func (self *tokenList) move() *token {
-	if len(self.tokens) > 0 {
-		t := self.tokens[0]
-		self.tokens = self.tokens[1:]
+func (tl *tokenList) move() *token {
+	if len(tl.tokens) > 0 {
+		t := tl.tokens[0]
+		tl.tokens = tl.tokens[1:]
 		return (*token)(&t)
 	}
 	return nil
@@ -728,8 +730,8 @@ const (
 	patternDefault = 0
 )
 
-func (self patternType) String() string {
-	switch self {
+func (pt patternType) String() string {
+	switch pt {
 	case patternArgument:
 		return "argument"
 	case patternCommand:
@@ -846,23 +848,23 @@ func newOption(short, long string, argcount int, value interface{}) *pattern {
 	return &p
 }
 
-func (self *pattern) flat(types patternType) (patternList, error) {
-	if self.t&patternLeaf != 0 {
+func (p *pattern) flat(types patternType) (patternList, error) {
+	if p.t&patternLeaf != 0 {
 		if types == patternDefault {
 			types = patternAll
 		}
-		if self.t&types != 0 {
-			return patternList{self}, nil
+		if p.t&types != 0 {
+			return patternList{p}, nil
 		}
 		return patternList{}, nil
 	}
 
-	if self.t&patternBranch != 0 {
-		if self.t&types != 0 {
-			return patternList{self}, nil
+	if p.t&patternBranch != 0 {
+		if p.t&types != 0 {
+			return patternList{p}, nil
 		}
 		result := patternList{}
-		for _, child := range self.children {
+		for _, child := range p.children {
 			childFlat, err := child.flat(types)
 			if err != nil {
 				return nil, err
@@ -871,37 +873,37 @@ func (self *pattern) flat(types patternType) (patternList, error) {
 		}
 		return result, nil
 	}
-	return nil, newError("unknown pattern type: %d, %d", self.t, types)
+	return nil, newError("unknown pattern type: %d, %d", p.t, types)
 }
 
-func (self *pattern) fix() error {
-	err := self.fixIdentities(nil)
+func (p *pattern) fix() error {
+	err := p.fixIdentities(nil)
 	if err != nil {
 		return err
 	}
-	self.fixRepeatingArguments()
+	p.fixRepeatingArguments()
 	return nil
 }
 
-func (self *pattern) fixIdentities(uniq patternList) error {
+func (p *pattern) fixIdentities(uniq patternList) error {
 	// Make pattern-tree tips point to same object if they are equal.
-	if self.t&patternBranch == 0 {
+	if p.t&patternBranch == 0 {
 		return nil
 	}
 	if uniq == nil {
-		selfFlat, err := self.flat(patternDefault)
+		pFlat, err := p.flat(patternDefault)
 		if err != nil {
 			return err
 		}
-		uniq = selfFlat.unique()
+		uniq = pFlat.unique()
 	}
-	for i, child := range self.children {
+	for i, child := range p.children {
 		if child.t&patternBranch == 0 {
 			ind, err := uniq.index(child)
 			if err != nil {
 				return err
 			}
-			self.children[i] = uniq[ind]
+			p.children[i] = uniq[ind]
 		} else {
 			err := child.fixIdentities(uniq)
 			if err != nil {
@@ -912,11 +914,11 @@ func (self *pattern) fixIdentities(uniq patternList) error {
 	return nil
 }
 
-func (self *pattern) fixRepeatingArguments() {
+func (p *pattern) fixRepeatingArguments() {
 	// Fix elements that should accumulate/increment values.
 	var either []patternList
 
-	for _, child := range self.transform().children {
+	for _, child := range p.transform().children {
 		either = append(either, child.children)
 	}
 	for _, cas := range either {
@@ -943,14 +945,14 @@ func (self *pattern) fixRepeatingArguments() {
 	}
 }
 
-func (self *pattern) match(left *patternList, collected *patternList) (bool, *patternList, *patternList) {
+func (p *pattern) match(left *patternList, collected *patternList) (bool, *patternList, *patternList) {
 	if collected == nil {
 		collected = &patternList{}
 	}
-	if self.t&patternRequired != 0 {
+	if p.t&patternRequired != 0 {
 		l := left
 		c := collected
-		for _, p := range self.children {
+		for _, p := range p.children {
 			var matched bool
 			matched, l, c = p.match(l, c)
 			if !matched {
@@ -958,36 +960,36 @@ func (self *pattern) match(left *patternList, collected *patternList) (bool, *pa
 			}
 		}
 		return true, l, c
-	} else if self.t&patternOptionAL != 0 || self.t&patternOptionSSHORTCUT != 0 {
-		for _, p := range self.children {
+	} else if p.t&patternOptionAL != 0 || p.t&patternOptionSSHORTCUT != 0 {
+		for _, p := range p.children {
 			_, left, collected = p.match(left, collected)
 		}
 		return true, left, collected
-	} else if self.t&patternOneOrMore != 0 {
-		if len(self.children) != 1 {
-			panic("OneOrMore.match(): assert len(self.children) == 1")
+	} else if p.t&patternOneOrMore != 0 {
+		if len(p.children) != 1 {
+			panic("OneOrMore.match(): assert len(p.children) == 1")
 		}
 		l := left
 		c := collected
-		var l_ *patternList
+		var lAlt *patternList
 		matched := true
 		times := 0
 		for matched {
 			// could it be that something didn't match but changed l or c?
-			matched, l, c = self.children[0].match(l, c)
+			matched, l, c = p.children[0].match(l, c)
 			if matched {
 				times += 1
 			}
-			if l_ == l {
+			if lAlt == l {
 				break
 			}
-			l_ = l
+			lAlt = l
 		}
 		if times >= 1 {
 			return true, l, c
 		}
 		return false, left, collected
-	} else if self.t&patternEither != 0 {
+	} else if p.t&patternEither != 0 {
 		type outcomeStruct struct {
 			matched   bool
 			left      *patternList
@@ -995,7 +997,7 @@ func (self *pattern) match(left *patternList, collected *patternList) (bool, *pa
 			length    int
 		}
 		outcomes := []outcomeStruct{}
-		for _, p := range self.children {
+		for _, p := range p.children {
 			matched, l, c := p.match(left, collected)
 			outcome := outcomeStruct{matched, l, c, len(*l)}
 			if matched {
@@ -1013,25 +1015,25 @@ func (self *pattern) match(left *patternList, collected *patternList) (bool, *pa
 			return outcomes[minIndex].matched, outcomes[minIndex].left, outcomes[minIndex].collected
 		}
 		return false, left, collected
-	} else if self.t&patternLeaf != 0 {
-		pos, match := self.singleMatch(left)
+	} else if p.t&patternLeaf != 0 {
+		pos, match := p.singleMatch(left)
 		var increment interface{}
 		if match == nil {
 			return false, left, collected
 		}
-		left_ := make(patternList, len((*left)[:pos]), len((*left)[:pos])+len((*left)[pos+1:]))
-		copy(left_, (*left)[:pos])
-		left_ = append(left_, (*left)[pos+1:]...)
+		leftAlt := make(patternList, len((*left)[:pos]), len((*left)[:pos])+len((*left)[pos+1:]))
+		copy(leftAlt, (*left)[:pos])
+		leftAlt = append(leftAlt, (*left)[pos+1:]...)
 		sameName := patternList{}
 		for _, a := range *collected {
-			if a.name == self.name {
+			if a.name == p.name {
 				sameName = append(sameName, a)
 			}
 		}
 
-		switch self.value.(type) {
+		switch p.value.(type) {
 		case int, []string:
-			switch self.value.(type) {
+			switch p.value.(type) {
 			case int:
 				increment = 1
 			case []string:
@@ -1047,7 +1049,7 @@ func (self *pattern) match(left *patternList, collected *patternList) (bool, *pa
 				collectedMatch := make(patternList, len(*collected), len(*collected)+1)
 				copy(collectedMatch, *collected)
 				collectedMatch = append(collectedMatch, match)
-				return true, &left_, &collectedMatch
+				return true, &leftAlt, &collectedMatch
 			}
 			switch sameName[0].value.(type) {
 			case int:
@@ -1055,68 +1057,64 @@ func (self *pattern) match(left *patternList, collected *patternList) (bool, *pa
 			case []string:
 				sameName[0].value = append(sameName[0].value.([]string), increment.([]string)...)
 			}
-			return true, &left_, collected
+			return true, &leftAlt, collected
 		}
 		collectedMatch := make(patternList, len(*collected), len(*collected)+1)
 		copy(collectedMatch, *collected)
 		collectedMatch = append(collectedMatch, match)
-		return true, &left_, &collectedMatch
+		return true, &leftAlt, &collectedMatch
 	}
 	panic("unmatched type")
-	return false, &patternList{}, &patternList{}
 }
 
-func (self *pattern) singleMatch(left *patternList) (int, *pattern) {
-	if self.t&patternArgument != 0 {
-		for n, p := range *left {
-			if p.t&patternArgument != 0 {
-				return n, newArgument(self.name, p.value)
+func (p *pattern) singleMatch(left *patternList) (int, *pattern) {
+	if p.t&patternArgument != 0 {
+		for n, pat := range *left {
+			if pat.t&patternArgument != 0 {
+				return n, newArgument(p.name, pat.value)
 			}
 		}
 		return -1, nil
-	} else if self.t&patternCommand != 0 {
-		for n, p := range *left {
-			if p.t&patternArgument != 0 {
-				if p.value == self.name {
-					return n, newCommand(self.name, true)
-				} else {
-					break
+	} else if p.t&patternCommand != 0 {
+		for n, pat := range *left {
+			if pat.t&patternArgument != 0 {
+				if pat.value == p.name {
+					return n, newCommand(p.name, true)
 				}
+				break
 			}
 		}
 		return -1, nil
-	} else if self.t&patternOption != 0 {
-		for n, p := range *left {
-			if self.name == p.name {
-				return n, p
+	} else if p.t&patternOption != 0 {
+		for n, pat := range *left {
+			if p.name == pat.name {
+				return n, pat
 			}
 		}
 		return -1, nil
 	}
 	panic("unmatched type")
-	return -1, nil
 }
 
-func (self *pattern) String() string {
-	if self.t&patternOption != 0 {
-		return fmt.Sprintf("%s(%s, %s, %d, %+v)", self.t, self.short, self.long, self.argcount, self.value)
-	} else if self.t&patternLeaf != 0 {
-		return fmt.Sprintf("%s(%s, %+v)", self.t, self.name, self.value)
-	} else if self.t&patternBranch != 0 {
+func (p *pattern) String() string {
+	if p.t&patternOption != 0 {
+		return fmt.Sprintf("%s(%s, %s, %d, %+v)", p.t, p.short, p.long, p.argcount, p.value)
+	} else if p.t&patternLeaf != 0 {
+		return fmt.Sprintf("%s(%s, %+v)", p.t, p.name, p.value)
+	} else if p.t&patternBranch != 0 {
 		result := ""
-		for i, child := range self.children {
+		for i, child := range p.children {
 			if i > 0 {
 				result += ", "
 			}
 			result += child.String()
 		}
-		return fmt.Sprintf("%s(%s)", self.t, result)
+		return fmt.Sprintf("%s(%s)", p.t, result)
 	}
 	panic("unmatched type")
-	return ""
 }
 
-func (self *pattern) transform() *pattern {
+func (p *pattern) transform() *pattern {
 	/*
 		Expand pattern into an (almost) equivalent one, but with single Either.
 
@@ -1124,7 +1122,7 @@ func (self *pattern) transform() *pattern {
 		Quirks: [-a] => (-a), (-a...) => (-a -a)
 	*/
 	result := []patternList{}
-	groups := []patternList{patternList{self}}
+	groups := []patternList{patternList{p}}
 	parents := patternRequired +
 		patternOptionAL +
 		patternOptionSSHORTCUT +
@@ -1171,8 +1169,8 @@ func (self *pattern) transform() *pattern {
 	return newEither(either...)
 }
 
-func (self *pattern) eq(other *pattern) bool {
-	return reflect.DeepEqual(self, other)
+func (p *pattern) eq(other *pattern) bool {
+	return reflect.DeepEqual(p, other)
 }
 
 func (pl patternList) unique() patternList {
@@ -1207,16 +1205,16 @@ func (pl patternList) count(p *pattern) int {
 }
 
 func (pl patternList) diff(l patternList) patternList {
-	l_ := make(patternList, len(l))
-	copy(l_, l)
+	lAlt := make(patternList, len(l))
+	copy(lAlt, l)
 	result := make(patternList, 0, len(pl))
 	for _, v := range pl {
 		if v != nil {
 			match := false
-			for i, w := range l_ {
+			for i, w := range lAlt {
 				if w.eq(v) {
 					match = true
-					l_[i] = nil
+					lAlt[i] = nil
 					break
 				}
 			}
@@ -1236,8 +1234,8 @@ func (pl patternList) double() patternList {
 	return result
 }
 
-func (self *patternList) remove(p *pattern) {
-	(*self) = self.diff(patternList{p})
+func (pl *patternList) remove(p *pattern) {
+	(*pl) = pl.diff(patternList{p})
 }
 
 func (pl patternList) dictionary() map[string]interface{} {
