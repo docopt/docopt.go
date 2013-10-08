@@ -58,7 +58,7 @@ import (
 //
 //  import (
 //      "fmt"
-//      docopt "github.com/docopt/docopt.go"
+//      "github.com/docopt/docopt.go"
 //  )
 //
 //  func main() {
