@@ -1256,15 +1256,18 @@ func TestAnyOptionsParameter(t *testing.T) {
 }
 
 func TestDefaultValueForPositionalArguments(t *testing.T) {
-	if v, _, err := parse("usage: prog [<p>]\n\n<p>  [default: x]", []string{}, true, "", false); reflect.DeepEqual(v, map[string]interface{}{"<p>": nil}) != true {
+	doc := "Usage: prog [--data=<data>...]\nOptions:\n\t-d --data=<arg>    Input data [default: x]"
+	if v, _, err := parse(doc, []string{}, true, "", false); reflect.DeepEqual(v, map[string]interface{}{"--data": []string{"x"}}) != true {
 		t.Error(err)
 	}
 
-	if v, _, err := parse("usage: prog [<p>]...\n\n<p>  [default: x y]", []string{}, true, "", false); reflect.DeepEqual(v, map[string]interface{}{"<p>": []string{}}) != true {
+	doc = "Usage: prog [--data=<data>...]\nOptions:\n\t-d --data=<arg>    Input data [default: x y]"
+	if v, _, err := parse(doc, []string{}, true, "", false); reflect.DeepEqual(v, map[string]interface{}{"--data": []string{"x", "y"}}) != true {
 		t.Error(err)
 	}
 
-	if v, _, err := parse("usage: prog [<p>]...\n\n<p>  [default: x y]", []string{"this"}, true, "", false); reflect.DeepEqual(v, map[string]interface{}{"<p>": []string{"this"}}) != true {
+	doc = "Usage: prog [--data=<data>...]\nOptions:\n\t-d --data=<arg>    Input data [default: x y]"
+	if v, _, err := parse(doc, []string{"--data=this"}, true, "", false); reflect.DeepEqual(v, map[string]interface{}{"--data": []string{"this"}}) != true {
 		t.Error(err)
 	}
 }
