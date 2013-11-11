@@ -15,7 +15,7 @@ func main() {
 
 	fmt.Println(arguments)
 
-	var x bool = arguments["-x"].(bool) // type assertion required
+	var x = arguments["-x"].(bool) // type assertion required
 	if x == true {
 		fmt.Println("x is true")
 	}

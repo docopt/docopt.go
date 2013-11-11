@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func loadJsonConfig() map[string]interface{} {
+func loadJSONConfig() map[string]interface{} {
 	var result map[string]interface{}
 	jsonData := []byte(`{"--force": true, "--timeout": "10", "--baud": "9600"}`)
 	json.Unmarshal(jsonData, &result)
@@ -63,7 +63,7 @@ func main() {
   config_file_example serial <port> [--baud=<rate>] [--timeout=<seconds>]
   config_file_example -h | --help | --version`
 
-	jsonConfig := loadJsonConfig()
+	jsonConfig := loadJSONConfig()
 	iniConfig := loadIniConfig()
 	arguments, _ := docopt.Parse(usage, nil, true, "0.1.1rc", false)
 
