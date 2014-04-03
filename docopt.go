@@ -86,7 +86,7 @@ import (
 //   "serial": false,
 //   "tcp": true}
 func Parse(doc string, argv []string, help bool, version string, optionsFirst bool) (map[string]interface{}, error) {
-	args, output, err := parse(doc, argv, help, version, optionsFirst)
+	args, output, err := ParseSafe(doc, argv, help, version, optionsFirst)
 	if _, ok := err.(*UserError); ok {
 		fmt.Println(output)
 		os.Exit(1)
@@ -98,7 +98,7 @@ func Parse(doc string, argv []string, help bool, version string, optionsFirst bo
 }
 
 // parse and return a map of args, output and all errors
-func parse(doc string, argv []string, help bool, version string, optionsFirst bool) (args map[string]interface{}, output string, err error) {
+func ParseSafe(doc string, argv []string, help bool, version string, optionsFirst bool) (args map[string]interface{}, output string, err error) {
 	if argv == nil && len(os.Args) > 1 {
 		argv = os.Args[1:]
 	}
