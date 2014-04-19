@@ -1,12 +1,14 @@
 // Licensed under terms of MIT license (see LICENSE-MIT)
 // Copyright (c) 2013 Keith Batten, kbatten@gmail.com
 
-// Package docopt creates beautiful command-line interfaces based on the
-// command help message
-//
-// Port of docopt for python
-// https://github.com/docopt/docopt
-// http://docopt.org
+/*
+Package docopt parses command-line arguments based on a help message.
+
+⚠ Use the alias “docopt-go”:
+	import "github.com/docopt/docopt-go"
+or
+	$ go get github.com/github/docopt-go
+*/
 package docopt
 
 import (
@@ -18,73 +20,28 @@ import (
 	"unicode"
 )
 
-// Parse `argv` based on command-line interface described in `doc`.
-//
-// docopt creates your command-line interface based on its
-// description that you pass as `doc`. Such description can contain
-// --options, <positional-argument>, commands, which could be
-// [optional], (required), (mutually | exclusive) or repeated...
-//
-// Parameters:
-//  doc : string
-//   Description of your command-line interface.
-//
-//  argv : list of string or nil
-//   Argument vector to be parsed. os.Args[1:] is used if nil.
-//
-//  help : bool (default: true)
-//   Set to false to disable automatic help on -h or --help options.
-//
-//  version : string
-//   If set to something besides an empty string, the string will be printed
-//   if --version is in argv
-//
-//  optionsFirst : bool (default: false)
-//   Set to true to require options precede positional arguments,
-//   i.e. to forbid options and positional arguments intermix.
-//
-// Returns:
-//  args : map[string]interface{}
-//   A map, where keys are names of command-line elements
-//   such as e.g. "--verbose" and "<path>", and values are the
-//   parsed values of those elements.
-//
-//  err : error, *docopt.LanguageError, *docopt.UserError
-//
-//  os.Exit on user error or help
-//
-// Example:
-//  package main
-//
-//  import (
-//      "fmt"
-//      "github.com/docopt/docopt-go"
-//  )
-//
-//  func main() {
-//      doc := `
-//  Usage:
-//    my_program tcp <host> <port> [--timeout=<seconds>]
-//    my_program serial <port> [--baud=<n>] [--timeout=<seconds>]
-//    my_program (-h | --help | --version)
-//
-//  Options:
-//    -h, --help Show this screen and exit.
-//    --baud=<n> Baudrate [default: 9600]
-//  `
-//      argv := []string{"tcp", "127.0.0.1", "80", "--timeout", "30"}
-//      fmt.Println(docopt.Parse(doc, argv, true, "", false))
-//  }
-//
-// Example output:
-//  {"--baud": "9600",
-//   "--help": false,
-//   "--timeout": "30",
-//   "--version": false,
-//   "<host>": "127.0.0.1",
-//   "<port>": "8"',
-//   "serial": false,
-//   "tcp": true}
+/*
+Parse `argv` based on the command-line interface described in `doc`.
+
+Given a conventional command-line help message, docopt creates a parser and
+processes the arguments. See
+https://github.com/docopt/docopt#help-message-format for a description of the
+help message format. If `argv` is `nil`, `os.Args[1:]` is used.
+
+docopt returns a map of option names to the values parsed from `argv`, and an
+error or `nil`.
+
+Set `help` to `false` to disable automatic help messages on `-h` or `--help`.
+If `version` is a non-empty string, it will be printed when `--version` is
+specified. Set `optionsFirst` to `true` to require that options always come
+before positional arguments; otherwise they can overlap.
+
+By default, docopt calls `os.Exit(0)` if it handled a built-in option such as
+`-h` or `--version`. If the user errored with a wrong command or options,
+docopt exits with a return code of 1. To stop docopt from calling `os.Exit()`
+and to handle your own return codes, pass an optional last parameter of `false`
+for `exit`.
+*/
 func Parse(doc string, argv []string, help bool, version string,
 	optionsFirst bool, exit ...bool) (map[string]interface{}, error) {
 	// if "false" was the (optional) last arg, don't call os.Exit()
@@ -94,11 +51,13 @@ func Parse(doc string, argv []string, help bool, version string,
 	}
 	args, output, err := parse(doc, argv, help, version, optionsFirst)
 	if _, ok := err.(*UserError); ok {
+		// the user gave us bad input
 		fmt.Println(output)
 		if exitOk {
 			os.Exit(1)
 		}
 	} else if len(output) > 0 && err == nil {
+		// the user asked for help or `--version`
 		fmt.Println(output)
 		if exitOk {
 			os.Exit(0)

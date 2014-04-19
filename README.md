@@ -1,57 +1,23 @@
-docopt.go
+docopt-go
 =========
 
 [![Build Status](https://travis-ci.org/docopt/docopt.go.svg?branch=master)](https://travis-ci.org/docopt/docopt.go)
 
-Golang implementation of [docopt](http://docopt.org/) 0.6.1+fix
+An implementation of [docopt](http://docopt.org/) in the
+[Go](http://golang.org/) programming language.
 
-## Installation
+**docopt** helps you create *beautiful* command-line interfaces easily:
 
-import "github.com/docopt/docopt-go" and then run `go get`.
-
-## API
-
-``` go
-func docopt.Parse(doc string, argv []string, help bool, version string, optionsFirst bool)
-(args map[string]interface{}, err error)
-```
-
-Parse `argv` based on command-line interface described in `doc`.
-
-docopt creates your command-line interface based on its description that you pass as `doc`. Such description can contain --options, <positional-argument>, commands, which could be [optional], (required), (mutually | exclusive) or repeated...
-
-### arguments
-
-`doc` Description of your command-line interface.
-
-`argv` Argument vector to be parsed. os.Args[1:] is used if nil.
-
-`help` Set to false to disable automatic help on -h or --help options..
-
-`version` If set to something besides an empty string, the string will be printed
- if --version is in argv.
-
-`optionsFirst` Set to true to require options precede positional arguments,
- i.e. to forbid options and positional arguments intermix..
-
-### return values
-
-`args`, map[string]interface{}. A map, where keys are names of command-line elements such as e.g. "--verbose" and "<path>", and values are the  parsed values of those elements. interface{} can be `bool`, `int`, `string`, `[]string`.
-
-`err`, error. Either *docopt.LanguageError, *docopt.UserError or nil
-
-## Example
-
-``` go
+```go
 package main
 
 import (
-    "fmt"
-    "github.com/docopt/docopt-go"
+	"fmt"
+	"github.com/docopt/docopt-go"
 )
 
 func main() {
-usage := `Naval Fate.
+	  usage := `Naval Fate.
 
 Usage:
   naval_fate ship new <name>...
@@ -68,15 +34,50 @@ Options:
   --moored      Moored (anchored) mine.
   --drifting    Drifting mine.`
 
-    arguments, _ := docopt.Parse(usage, nil, true, "Naval Fate 2.0", false)
-    fmt.Println(arguments)
+	  arguments, _ := docopt.Parse(usage, nil, true, "Naval Fate 2.0", false)
+	  fmt.Println(arguments)
 }
 ```
 
+**docopt** parses command-line arguments based on a help message. Don't
+write parser code: a good help message already has all the necessary
+information in it.
+
+## Installation
+
+⚠ Use the alias “docopt-go”. To use docopt in your Go code:
+
+```go
+import "github.com/docopt/docopt-go"
+```
+
+To install docopt according to your `$GOPATH`:
+
+```console
+$ go get github.com/docopt/docopt-go
+```
+
+## API
+
+```go
+func Parse(doc string, argv []string, help bool, version string,
+    optionsFirst bool, exit ...bool) (map[string]interface{}, error)
+```
+Parse `argv` based on the command-line interface described in `doc`.
+
+Given a conventional command-line help message, docopt creates a parser and
+processes the arguments. See
+https://github.com/docopt/docopt#help-message-format for a description of the
+help message format. If `argv` is `nil`, `os.Args[1:]` is used.
+
+docopt returns a map of option names to the values parsed from `argv`, and an
+error or `nil`.
+
 ## Testing
 
-All tests from the python version have been implemented and all are passing.
+All tests from the Python version are implemented and passing
+at [Travis CI](https://travis-ci.org/docopt/docopt.go). New
+language-agnostic tests have been added
+to [test_golang.docopt](test_golang.docopt).
 
-New language agnostic tests have been added to `test_golang.docopt`.
-
-To run them use `go test`.
+To run tests for docopt-go, use `go test`.
