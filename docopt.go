@@ -85,14 +85,24 @@ import (
 //   "<port>": "8"',
 //   "serial": false,
 //   "tcp": true}
-func Parse(doc string, argv []string, help bool, version string, optionsFirst bool) (map[string]interface{}, error) {
+func Parse(doc string, argv []string, help bool, version string,
+	optionsFirst bool, exit ...bool) (map[string]interface{}, error) {
+	// if "false" was the (optional) last arg, don't call os.Exit()
+	exitOk := true
+	if len(exit) > 0 {
+		exitOk = exit[0]
+	}
 	args, output, err := parse(doc, argv, help, version, optionsFirst)
 	if _, ok := err.(*UserError); ok {
 		fmt.Println(output)
-		os.Exit(1)
+		if exitOk {
+			os.Exit(1)
+		}
 	} else if len(output) > 0 && err == nil {
 		fmt.Println(output)
-		os.Exit(0)
+		if exitOk {
+			os.Exit(0)
+		}
 	}
 	return args, err
 }
