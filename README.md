@@ -1,7 +1,7 @@
 docopt.go
 =========
 
-[![Build Status](https://travis-ci.org/docopt/docopt-go.svg?branch=master)](https://travis-ci.org/docopt/docopt-go)
+[![Build Status](https://travis-ci.org/docopt/docopt.go.svg?branch=master)](https://travis-ci.org/docopt/docopt.go)
 
 Golang implementation of [docopt](http://docopt.org/) 0.6.1+fix
 
