@@ -2,6 +2,7 @@ docopt-go
 =========
 
 [![Build Status](https://travis-ci.org/docopt/docopt.go.svg?branch=master)](https://travis-ci.org/docopt/docopt.go)
+[![GoDoc](https://godoc.org/github.com/docopt/docopt.go?status.png)](https://godoc.org/github.com/docopt/docopt.go)
 
 An implementation of [docopt](http://docopt.org/) in the
 [Go](http://golang.org/) programming language.
@@ -72,6 +73,9 @@ help message format. If `argv` is `nil`, `os.Args[1:]` is used.
 
 docopt returns a map of option names to the values parsed from `argv`, and an
 error or `nil`.
+
+More documentation for docopt is available at
+[GoDoc.org](https://godoc.org/github.com/docopt/docopt.go).
 
 ## Testing
 
