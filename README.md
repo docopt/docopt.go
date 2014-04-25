@@ -2,6 +2,7 @@ docopt-go
 =========
 
 [![Build Status](https://travis-ci.org/docopt/docopt.go.svg?branch=master)](https://travis-ci.org/docopt/docopt.go)
+[![Coverage Status](https://coveralls.io/repos/docopt/docopt.go/badge.png)](https://coveralls.io/r/docopt/docopt.go)
 [![GoDoc](https://godoc.org/github.com/docopt/docopt.go?status.png)](https://godoc.org/github.com/docopt/docopt.go)
 
 An implementation of [docopt](http://docopt.org/) in the
