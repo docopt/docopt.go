@@ -9,6 +9,12 @@ go:
     - 1.2.1
     - tip
 
-install: go get -d -v ./... && go build -v .
+before_install:
+    - go get -v github.com/golang/lint/golint
 
-script: go test -v .
+install:
+    - go get -d -v ./... && go build -v .
+
+script:
+    - $HOME/gopath/bin/golint .
+    - go test -v .

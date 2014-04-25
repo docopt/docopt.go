@@ -947,7 +947,7 @@ func (p *pattern) match(left *patternList, collected *patternList) (bool, *patte
 			// could it be that something didn't match but changed l or c?
 			matched, l, c = p.children[0].match(l, c)
 			if matched {
-				times += 1
+				times++
 			}
 			if lAlt == l {
 				break
