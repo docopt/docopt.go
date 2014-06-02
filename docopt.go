@@ -548,7 +548,7 @@ func extras(help bool, version string, options patternList, doc string) string {
 	}
 	if version != "" {
 		for _, o := range options {
-			if (o.name == "--version") && o.value == true {
+			if (o.name == "-v" || o.name == "--version") && o.value == true {
 				return version
 			}
 		}
