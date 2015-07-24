@@ -13,6 +13,7 @@ package docopt
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"regexp"
@@ -44,6 +45,13 @@ for `exit`.
 */
 func Parse(doc string, argv []string, help bool, version string,
 	optionsFirst bool, exit ...bool) (map[string]interface{}, error) {
+	return Fparse(os.Stdout, doc, argv, help, version, optionsFirst, exit...)
+}
+/*
+Fparse is like Parse but it allows capturing anything written to stdout.
+*/
+func Fparse(w io.Writer, doc string, argv []string, help bool, version string,
+	optionsFirst bool, exit ...bool) (map[string]interface{}, error) {
 	// if "false" was the (optional) last arg, don't call os.Exit()
 	exitOk := true
 	if len(exit) > 0 {
@@ -52,13 +60,13 @@ func Parse(doc string, argv []string, help bool, version string,
 	args, output, err := parse(doc, argv, help, version, optionsFirst)
 	if _, ok := err.(*UserError); ok {
 		// the user gave us bad input
-		fmt.Println(output)
+		fmt.Fprintln(w, output)
 		if exitOk {
 			os.Exit(1)
 		}
 	} else if len(output) > 0 && err == nil {
 		// the user asked for help or `--version`
-		fmt.Println(output)
+		fmt.Fprintln(w, output)
 		if exitOk {
 			os.Exit(0)
 		}
