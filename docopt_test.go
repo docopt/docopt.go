@@ -11,7 +11,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -137,7 +136,7 @@ func TestCommands(t *testing.T) {
 	if v, err := Parse("Usage: prog a b", []string{"a", "b"}, true, "", false, false); reflect.DeepEqual(v, map[string]interface{}{"a": true, "b": true}) != true {
 		t.Error(err)
 	}
-	_, err := Parse("Usage: prog a b", []string{"b", "a"}, true, "", false, false)
+	_, _, err := parseOutput("Usage: prog a b", []string{"b", "a"}, true, "", false)
 	if _, ok := err.(*UserError); !ok {
 		t.Error(err)
 	}
@@ -1064,60 +1063,60 @@ func TestPatternFixIdentities2(t *testing.T) {
 }
 
 func TestLongOptionsErrorHandling(t *testing.T) {
-	_, err := Parse("Usage: prog", []string{"--non-existent"}, true, "", false, false)
+	_, _, err := parseOutput("Usage: prog", []string{"--non-existent"}, true, "", false)
 	if _, ok := err.(*UserError); !ok {
 		t.Error(fmt.Sprintf("(%s) %s", reflect.TypeOf(err), err))
 	}
-	_, err = Parse("Usage: prog [--version --verbose]\nOptions: --version\n --verbose",
-		[]string{"--ver"}, true, "", false, false)
+	_, _, err = parseOutput("Usage: prog [--version --verbose]\nOptions: --version\n --verbose",
+		[]string{"--ver"}, true, "", false)
 	if _, ok := err.(*UserError); !ok {
 		t.Error(err)
 	}
-	_, err = Parse("Usage: prog --long\nOptions: --long ARG", []string{}, true, "", false, false)
+	_, _, err = parseOutput("Usage: prog --long\nOptions: --long ARG", []string{}, true, "", false)
 	if _, ok := err.(*LanguageError); !ok {
 		t.Error(err)
 	}
-	_, err = Parse("Usage: prog --long ARG\nOptions: --long ARG",
-		[]string{"--long"}, true, "", false, false)
+	_, _, err = parseOutput("Usage: prog --long ARG\nOptions: --long ARG",
+		[]string{"--long"}, true, "", false)
 	if _, ok := err.(*UserError); !ok {
 		t.Error(fmt.Sprintf("(%s) %s", reflect.TypeOf(err), err))
 	}
-	_, err = Parse("Usage: prog --long=ARG\nOptions: --long", []string{}, true, "", false, false)
+	_, _, err = parseOutput("Usage: prog --long=ARG\nOptions: --long", []string{}, true, "", false)
 	if _, ok := err.(*LanguageError); !ok {
 		t.Error(err)
 	}
-	_, err = Parse("Usage: prog --long\nOptions: --long",
-		[]string{}, true, "--long=ARG", false, false)
+	_, _, err = parseOutput("Usage: prog --long\nOptions: --long",
+		[]string{}, true, "--long=ARG", false)
 	if _, ok := err.(*UserError); !ok {
 		t.Error(err)
 	}
 }
 
 func TestShortOptionsErrorHandling(t *testing.T) {
-	_, err := Parse("Usage: prog -x\nOptions: -x  this\n -x  that", []string{}, true, "", false, false)
+	_, _, err := parseOutput("Usage: prog -x\nOptions: -x  this\n -x  that", []string{}, true, "", false)
 	if _, ok := err.(*LanguageError); !ok {
 		t.Error(fmt.Sprintf("(%s) %s", reflect.TypeOf(err), err))
 	}
-	_, err = Parse("Usage: prog", []string{"-x"}, true, "", false, false)
+	_, _, err = parseOutput("Usage: prog", []string{"-x"}, true, "", false)
 	if _, ok := err.(*UserError); !ok {
 		t.Error(err)
 	}
-	_, err = Parse("Usage: prog -o\nOptions: -o ARG", []string{}, true, "", false, false)
+	_, _, err = parseOutput("Usage: prog -o\nOptions: -o ARG", []string{}, true, "", false)
 	if _, ok := err.(*LanguageError); !ok {
 		t.Error(err)
 	}
-	_, err = Parse("Usage: prog -o ARG\nOptions: -o ARG", []string{"-o"}, true, "", false, false)
+	_, _, err = parseOutput("Usage: prog -o ARG\nOptions: -o ARG", []string{"-o"}, true, "", false)
 	if _, ok := err.(*UserError); !ok {
 		t.Error(err)
 	}
 }
 
 func TestMatchingParen(t *testing.T) {
-	_, err := Parse("Usage: prog [a [b]", []string{}, true, "", false, false)
+	_, _, err := parseOutput("Usage: prog [a [b]", []string{}, true, "", false)
 	if _, ok := err.(*LanguageError); !ok {
 		t.Error(err)
 	}
-	_, err = Parse("Usage: prog [a [b] ] c )", []string{}, true, "", false, false)
+	_, _, err = parseOutput("Usage: prog [a [b] ] c )", []string{}, true, "", false)
 	if _, ok := err.(*LanguageError); !ok {
 		t.Error(err)
 	}
@@ -1130,7 +1129,7 @@ func TestAllowDoubleDash(t *testing.T) {
 	if v, err := Parse("usage: prog [-o] [--] <arg>\noptions: -o", []string{"-o", "1"}, true, "", false, false); reflect.DeepEqual(v, map[string]interface{}{"-o": true, "<arg>": "1", "--": false}) != true {
 		t.Error(err)
 	}
-	_, err := Parse("usage: prog [-o] <arg>\noptions:-o", []string{"-o"}, true, "", false, false)
+	_, _, err := parseOutput("usage: prog [-o] <arg>\noptions:-o", []string{"-o"}, true, "", false)
 	if _, ok := err.(*UserError); !ok { //"--" is not allowed; FIXME?
 		t.Error(err)
 	}
@@ -1165,11 +1164,11 @@ func TestDocopt(t *testing.T) {
 		t.Error(err)
 	}
 
-	_, err := Parse(doc, []string{"-v", "input.py", "output.py"}, true, "", false, false) // does not match
+	_, _, err := parseOutput(doc, []string{"-v", "input.py", "output.py"}, true, "", false) // does not match
 	if _, ok := err.(*UserError); !ok {
 		t.Error(err)
 	}
-	_, err = Parse(doc, []string{"--fake"}, true, "", false, false)
+	_, _, err = parseOutput(doc, []string{"--fake"}, true, "", false)
 	if _, ok := err.(*UserError); !ok {
 		t.Error(err)
 	}
@@ -1217,7 +1216,7 @@ func TestCountMultipleFlags(t *testing.T) {
 	if v, err := Parse("usage: prog [-vv]", []string{"-vv"}, true, "", false, false); reflect.DeepEqual(v, map[string]interface{}{"-v": 2}) != true {
 		t.Error(err)
 	}
-	_, err := Parse("usage: prog [-vv]", []string{"-vvv"}, true, "", false, false)
+	_, _, err := parseOutput("usage: prog [-vv]", []string{"-vvv"}, true, "", false)
 	if _, ok := err.(*UserError); !ok {
 		t.Error(err)
 	}
@@ -1233,24 +1232,24 @@ func TestCountMultipleFlags(t *testing.T) {
 }
 
 func TestAnyOptionsParameter(t *testing.T) {
-	_, err := Parse("usage: prog [options]",
-		[]string{"-foo", "--bar", "--spam=eggs"}, true, "", false, false)
+	_, _, err := parseOutput("usage: prog [options]",
+		[]string{"-foo", "--bar", "--spam=eggs"}, true, "", false)
 	if _, ok := err.(*UserError); !ok {
 		t.Fail()
 	}
 
-	_, err = Parse("usage: prog [options]",
-		[]string{"--foo", "--bar", "--bar"}, true, "", false, false)
+	_, _, err = parseOutput("usage: prog [options]",
+		[]string{"--foo", "--bar", "--bar"}, true, "", false)
 	if _, ok := err.(*UserError); !ok {
 		t.Fail()
 	}
-	_, err = Parse("usage: prog [options]",
-		[]string{"--bar", "--bar", "--bar", "-ffff"}, true, "", false, false)
+	_, _, err = parseOutput("usage: prog [options]",
+		[]string{"--bar", "--bar", "--bar", "-ffff"}, true, "", false)
 	if _, ok := err.(*UserError); !ok {
 		t.Fail()
 	}
-	_, err = Parse("usage: prog [options]",
-		[]string{"--long=arg", "--long=another"}, true, "", false, false)
+	_, _, err = parseOutput("usage: prog [options]",
+		[]string{"--long=arg", "--long=another"}, true, "", false)
 	if _, ok := err.(*UserError); !ok {
 		t.Fail()
 	}
@@ -1331,14 +1330,14 @@ func TestIssue65EvaluateArgvWhenCalledNotWhenImported(t *testing.T) {
 }
 
 func TestIssue71DoubleDashIsNotAValidOptionArgument(t *testing.T) {
-	_, err := Parse("usage: prog [--log=LEVEL] [--] <args>...",
-		[]string{"--log", "--", "1", "2"}, true, "", false, false)
+	_, _, err := parseOutput("usage: prog [--log=LEVEL] [--] <args>...",
+		[]string{"--log", "--", "1", "2"}, true, "", false)
 	if _, ok := err.(*UserError); !ok {
 		t.Fail()
 	}
 
-	_, err = Parse(`usage: prog [-l LEVEL] [--] <args>...
-                  options: -l LEVEL`, []string{"-l", "--", "1", "2"}, true, "", false, false)
+	_, _, err = parseOutput(`usage: prog [-l LEVEL] [--] <args>...
+                  options: -l LEVEL`, []string{"-l", "--", "1", "2"}, true, "", false)
 	if _, ok := err.(*UserError); !ok {
 		t.Fail()
 	}
@@ -1418,7 +1417,7 @@ func TestFileTestcases(t *testing.T) {
 			t.Fatal(err)
 		}
 		for _, c := range tests {
-			result, err := Parse(c.doc, c.argv, true, "", false, false)
+			result, _, err := parseOutput(c.doc, c.argv, true, "", false)
 			if _, ok := err.(*UserError); c.userError && !ok {
 				// expected a user-error
 				t.Error("testcase:", c.id, "result:", result)
@@ -1498,24 +1497,11 @@ func parseTest(raw []byte) ([]testcase, error) {
 // parseOutput wraps the Parse() function to also return stdout
 func parseOutput(doc string, argv []string, help bool, version string,
 	optionsFirst bool) (map[string]interface{}, string, error) {
-	stdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
 
-	args, err := Parse(doc, argv, help, version, optionsFirst, false)
+	var buf bytes.Buffer
+	args, err := Fparse(&buf, doc, argv, help, version, optionsFirst, false)
 
-	outChan := make(chan string)
-	go func() {
-		var buf bytes.Buffer
-		io.Copy(&buf, r)
-		outChan <- buf.String()
-	}()
-
-	w.Close()
-	os.Stdout = stdout
-	output := <-outChan
-
-	return args, output, err
+	return args, buf.String(), err
 }
 
 var debugEnabled = false
