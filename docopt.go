@@ -129,18 +129,22 @@ func parse(doc string, argv []string, help bool, version string, optionsFirst bo
 		return
 	}
 	matched, left, collected := pat.match(&patternArgv, nil)
-	if matched && len(*left) == 0 {
-		patFlat, err = pat.flat(patternDefault)
-		if err != nil {
-			output = handleError(err, usage)
-			return
+	if !matched || len(*left) > 0 {
+		badArgs := left.ArgumentsString()
+		if len(badArgs) > 0 {
+			err = newUserError("unexpected arguments: " + badArgs)
+		} else {
+			err = newUserError("")
 		}
-		args = append(patFlat, *collected...).dictionary()
+		output = handleError(err, usage)
 		return
 	}
-
-	err = newUserError("")
-	output = handleError(err, usage)
+	patFlat, err = pat.flat(patternDefault)
+	if err != nil {
+		output = handleError(err, usage)
+		return
+	}
+	args = append(patFlat, *collected...).dictionary()
 	return
 }
 
@@ -1213,6 +1217,20 @@ func (pl patternList) dictionary() map[string]interface{} {
 		dict[a.name] = a.value
 	}
 	return dict
+}
+
+// ArgumentsString converts patternList into a space separated string of
+// arguments; it ignores any patterns that are not arguments, and does not walk
+// children.
+func (pl patternList) ArgumentsString() string {
+	args := []string{}
+	for _, arg := range pl {
+		argStr, ok := arg.value.(string)
+		if ok && (arg.t&patternArgument) != 0 {
+			args = append(args, argStr)
+		}
+	}
+	return strings.Join(args, " ")
 }
 
 func stringPartition(s, sep string) (string, string, string) {
