@@ -138,8 +138,20 @@ func TestCommands(t *testing.T) {
 		t.Error(err)
 	}
 	_, err := Parse("Usage: prog a b", []string{"b", "a"}, true, "", false, false)
-	if _, ok := err.(*UserError); !ok {
+	userErr, ok := err.(*UserError)
+	if !ok {
 		t.Error(err)
+	}
+	if !strings.HasSuffix(userErr.Error(), ": b a") {
+		t.Error("expected invalid arguments")
+	}
+	_, err = Parse("Usage: prog a", []string{"a", "b", "c"}, true, "", false, false)
+	userErr, ok = err.(*UserError)
+	if !ok {
+		t.Error(err)
+	}
+	if !strings.HasSuffix(userErr.Error(), ": b c") {
+		t.Error("expected invalid arguments")
 	}
 	return
 }
