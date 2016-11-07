@@ -1,13 +1,36 @@
 // Licensed under terms of MIT license (see LICENSE-MIT)
 // Copyright (c) 2013 Keith Batten, kbatten@gmail.com
+// Copyright (c) 2016 David Irvine
 
 /*
 Package docopt parses command-line arguments based on a help message.
 
-⚠ Use the alias “docopt-go”:
-	import "github.com/docopt/docopt-go"
-or
-	$ go get github.com/docopt/docopt-go
+Given a conventional command-line help message, docopt processes the arguments.
+See https://github.com/docopt/docopt#help-message-format for a description of
+the help message format.
+
+This package exposes three different APIs, depending on the level of control
+required. The first, simplest way to parse your docopt usage is to just call:
+
+	docopt.Parse(usage)
+
+This will use `os.Args[1:]` as the argv slice, and use the default parser
+options. If you want to provide your own version string and args, then use:
+
+	docopt.ParseArgs(usage, argv, "1.2.3")
+
+If the last parameter (version) is a non-empty string, it will be printed when
+`--version` is given in the argv slice. Finally, we can instantiate our own
+`docopt.Parser` which gives us control over how things like help messages are
+printed and whether to exit after displaying usage messages, etc.
+
+	parser := &docopt.Parser{
+		OptionsFirst: true,
+	}
+	args, err := parser.Parse(usage, argv, "")
+
+All three of these return a map of option names to the values parsed from argv,
+and an error or `nil`.
 */
 package docopt
 
@@ -20,27 +43,35 @@ import (
 	"unicode"
 )
 
+type Parser struct {
+	// HelpHandler is called when we encounter bad user input, or when the user
+	// asks for help.
+	// By default, this calls `os.Exit(0)` if it handled a built-in option such
+	// as `-h` or `--version`. If the user errored with a wrong command or
+	// options, we exit with a return code of 1.
+	HelpHandler func(err error, usage string)
+	// OptionsFirst requires that option flags always come before positional
+	// arguments; otherwise they can overlap.
+	OptionsFirst bool
+}
+
+var DefaultParser = &Parser{
+	HelpHandler: func(err error, usage string) {
+		if _, ok := err.(*UserError); ok {
+			// the user gave us bad input
+			fmt.Fprintln(os.Stderr, usage)
+			os.Exit(1)
+		} else if len(usage) > 0 && err == nil {
+			// the user asked for help or --version
+			fmt.Println(usage)
+			os.Exit(0)
+		}
+	},
+	OptionsFirst: false,
+}
+
 /*
 Parse `argv` based on the command-line interface described in `doc`.
-
-Given a conventional command-line help message, docopt creates a parser and
-processes the arguments. See
-https://github.com/docopt/docopt#help-message-format for a description of the
-help message format. If `argv` is `nil`, `os.Args[1:]` is used.
-
-docopt returns a map of option names to the values parsed from `argv`, and an
-error or `nil`.
-
-Set `help` to `false` to disable automatic help messages on `-h` or `--help`.
-If `version` is a non-empty string, it will be printed when `--version` is
-specified. Set `optionsFirst` to `true` to require that options always come
-before positional arguments; otherwise they can overlap.
-
-By default, docopt calls `os.Exit(0)` if it handled a built-in option such as
-`-h` or `--version`. If the user errored with a wrong command or options,
-docopt exits with a return code of 1. To stop docopt from calling `os.Exit()`
-and to handle your own return codes, pass an optional last parameter of `false`
-for `exit`.
 */
 func Parse(doc string, argv []string, help bool, version string,
 	optionsFirst bool, exit ...bool) (map[string]interface{}, error) {
