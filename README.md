@@ -1,12 +1,13 @@
 docopt-go
 =========
 
-[![Build Status](https://travis-ci.org/docopt/docopt.go.svg?branch=master)](https://travis-ci.org/docopt/docopt.go)
-[![Coverage Status](https://coveralls.io/repos/docopt/docopt.go/badge.png)](https://coveralls.io/r/docopt/docopt.go)
-[![GoDoc](https://godoc.org/github.com/docopt/docopt.go?status.png)](https://godoc.org/github.com/docopt/docopt.go)
+[![Build Status](https://travis-ci.org/aviddiviner/docopt-go.svg?branch=master)](https://travis-ci.org/aviddiviner/docopt-go)
+[![Coverage Status](https://coveralls.io/repos/aviddiviner/docopt-go/badge.png)](https://coveralls.io/r/aviddiviner/docopt-go)
+[![GoDoc](https://godoc.org/github.com/aviddiviner/docopt-go?status.png)](https://godoc.org/github.com/aviddiviner/docopt-go)
 
-An implementation of [docopt](http://docopt.org/) in the
-[Go](http://golang.org/) programming language.
+> Note: This is a work in progress refactor of the original package here: https://github.com/docopt/docopt.go
+
+An implementation of [docopt](http://docopt.org/) in the [Go](http://golang.org/) programming language.
 
 **docopt** helps you create *beautiful* command-line interfaces easily:
 
@@ -15,7 +16,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/docopt/docopt-go"
+	"github.com/aviddiviner/docopt-go"
 )
 
 func main() {
@@ -36,53 +37,58 @@ Options:
   --moored      Moored (anchored) mine.
   --drifting    Drifting mine.`
 
-	  arguments, _ := docopt.Parse(usage, nil, true, "Naval Fate 2.0", false)
+	  arguments, _ := docopt.Parse(usage)
 	  fmt.Println(arguments)
 }
 ```
 
-**docopt** parses command-line arguments based on a help message. Don't
-write parser code: a good help message already has all the necessary
-information in it.
+**docopt** parses command-line arguments based on a help message. Don't write parser code: a good help message already has all the necessary information in it.
 
 ## Installation
 
-⚠ Use the alias “docopt-go”. To use docopt in your Go code:
+To use docopt in your Go code:
 
 ```go
-import "github.com/docopt/docopt-go"
+import "github.com/aviddiviner/docopt-go"
 ```
 
-To install docopt according to your `$GOPATH`:
+To install docopt in your `$GOPATH`:
 
 ```console
-$ go get github.com/docopt/docopt-go
+$ go get github.com/aviddiviner/docopt-go
 ```
 
 ## API
 
+Given a conventional command-line help message, docopt processes the arguments. See https://github.com/docopt/docopt#help-message-format for a description of the help message format.
+
+This package exposes three different APIs, depending on the level of control required. The first, simplest way to parse your docopt usage is to just call:
+
 ```go
-func Parse(doc string, argv []string, help bool, version string,
-    optionsFirst bool, exit ...bool) (map[string]interface{}, error)
+docopt.Parse(usage)
 ```
-Parse `argv` based on the command-line interface described in `doc`.
 
-Given a conventional command-line help message, docopt creates a parser and
-processes the arguments. See
-https://github.com/docopt/docopt#help-message-format for a description of the
-help message format. If `argv` is `nil`, `os.Args[1:]` is used.
+This will use `os.Args[1:]` as the argv slice, and use the default parser options. If you want to provide your own version string and args, then use:
 
-docopt returns a map of option names to the values parsed from `argv`, and an
-error or `nil`.
+```go
+docopt.ParseArgs(usage, argv, "1.2.3")
+```
 
-More documentation for docopt is available at
-[GoDoc.org](https://godoc.org/github.com/docopt/docopt.go).
+If the last parameter (version) is a non-empty string, it will be printed when `--version` is given in the argv slice. Finally, we can instantiate our own `docopt.Parser` which gives us control over how things like help messages are printed and whether to exit after displaying usage messages, etc.
+
+```go
+parser := &docopt.Parser{
+  OptionsFirst: true,
+}
+args, err := parser.Parse(usage, argv, "")
+```
+
+All three of these return a map of option names to the values parsed from argv, and an error or `nil`.
+
+More documentation is available at [godoc.org](https://godoc.org/github.com/aviddiviner/docopt-go).
 
 ## Testing
 
-All tests from the Python version are implemented and passing
-at [Travis CI](https://travis-ci.org/docopt/docopt.go). New
-language-agnostic tests have been added
-to [test_golang.docopt](test_golang.docopt).
+All tests from the Python version are implemented and passing at [Travis CI](https://travis-ci.org/aviddiviner/docopt-go). New language-agnostic tests have been added to [test_golang.docopt](test_golang.docopt).
 
 To run tests for docopt-go, use `go test`.
