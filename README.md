@@ -2,8 +2,8 @@ docopt-go
 =========
 
 [![Build Status](https://travis-ci.org/aviddiviner/docopt-go.svg?branch=master)](https://travis-ci.org/aviddiviner/docopt-go)
-[![Coverage Status](https://coveralls.io/repos/aviddiviner/docopt-go/badge.png)](https://coveralls.io/r/aviddiviner/docopt-go)
-[![GoDoc](https://godoc.org/github.com/aviddiviner/docopt-go?status.png)](https://godoc.org/github.com/aviddiviner/docopt-go)
+[![Coverage Status](https://coveralls.io/repos/github/aviddiviner/docopt-go/badge.svg)](https://coveralls.io/github/aviddiviner/docopt-go)
+[![GoDoc](https://godoc.org/github.com/aviddiviner/docopt-go?status.svg)](https://godoc.org/github.com/aviddiviner/docopt-go)
 
 > Note: This is a work in progress refactor of the original package here: https://github.com/docopt/docopt.go
 
