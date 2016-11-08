@@ -1070,8 +1070,7 @@ func TestLongOptionsErrorHandling(t *testing.T) {
 	if _, ok := err.(*UserError); !ok {
 		t.Error(fmt.Sprintf("(%s) %s", reflect.TypeOf(err), err))
 	}
-	_, err = oldParse("Usage: prog [--version --verbose]\nOptions: --version\n --verbose",
-		[]string{"--ver"}, true, "", false, false)
+	_, err = testParser.ParseArgs("Usage: prog [--version --verbose]\nOptions: --version\n --verbose", []string{"--ver"}, "")
 	if _, ok := err.(*UserError); !ok {
 		t.Error(err)
 	}
@@ -1079,8 +1078,7 @@ func TestLongOptionsErrorHandling(t *testing.T) {
 	if _, ok := err.(*LanguageError); !ok {
 		t.Error(err)
 	}
-	_, err = oldParse("Usage: prog --long ARG\nOptions: --long ARG",
-		[]string{"--long"}, true, "", false, false)
+	_, err = testParser.ParseArgs("Usage: prog --long ARG\nOptions: --long ARG", []string{"--long"}, "")
 	if _, ok := err.(*UserError); !ok {
 		t.Error(fmt.Sprintf("(%s) %s", reflect.TypeOf(err), err))
 	}
@@ -1088,8 +1086,7 @@ func TestLongOptionsErrorHandling(t *testing.T) {
 	if _, ok := err.(*LanguageError); !ok {
 		t.Error(err)
 	}
-	_, err = oldParse("Usage: prog --long\nOptions: --long",
-		[]string{}, true, "--long=ARG", false, false)
+	_, err = testParser.ParseArgs("Usage: prog --long\nOptions: --long", []string{}, "--long=ARG")
 	if _, ok := err.(*UserError); !ok {
 		t.Error(err)
 	}
@@ -1235,24 +1232,20 @@ func TestCountMultipleFlags(t *testing.T) {
 }
 
 func TestAnyOptionsParameter(t *testing.T) {
-	_, err := oldParse("usage: prog [options]",
-		[]string{"-foo", "--bar", "--spam=eggs"}, true, "", false, false)
+	_, err := testParser.ParseArgs("usage: prog [options]", []string{"-foo", "--bar", "--spam=eggs"}, "")
 	if _, ok := err.(*UserError); !ok {
 		t.Fail()
 	}
 
-	_, err = oldParse("usage: prog [options]",
-		[]string{"--foo", "--bar", "--bar"}, true, "", false, false)
+	_, err = testParser.ParseArgs("usage: prog [options]", []string{"--foo", "--bar", "--bar"}, "")
 	if _, ok := err.(*UserError); !ok {
 		t.Fail()
 	}
-	_, err = oldParse("usage: prog [options]",
-		[]string{"--bar", "--bar", "--bar", "-ffff"}, true, "", false, false)
+	_, err = testParser.ParseArgs("usage: prog [options]", []string{"--bar", "--bar", "--bar", "-ffff"}, "")
 	if _, ok := err.(*UserError); !ok {
 		t.Fail()
 	}
-	_, err = oldParse("usage: prog [options]",
-		[]string{"--long=arg", "--long=another"}, true, "", false, false)
+	_, err = testParser.ParseArgs("usage: prog [options]", []string{"--long=arg", "--long=another"}, "")
 	if _, ok := err.(*UserError); !ok {
 		t.Fail()
 	}
@@ -1294,7 +1287,8 @@ func TestOptionsFirst(t *testing.T) {
 		t.Error(err)
 	}
 
-	if v, err := oldParse("usage: prog [--opt] [<args>...]", []string{"this", "that", "--opt"}, true, "", true, false); reflect.DeepEqual(v, map[string]interface{}{"--opt": false, "<args>": []string{"this", "that", "--opt"}}) != true {
+	optFirstParser := &Parser{HelpHandler: PrintHelpOnly, OptionsFirst: true}
+	if v, err := optFirstParser.ParseArgs("usage: prog [--opt] [<args>...]", []string{"this", "that", "--opt"}, ""); reflect.DeepEqual(v, map[string]interface{}{"--opt": false, "<args>": []string{"this", "that", "--opt"}}) != true {
 		t.Error(err)
 	}
 }
@@ -1333,14 +1327,13 @@ func TestIssue65EvaluateArgvWhenCalledNotWhenImported(t *testing.T) {
 }
 
 func TestIssue71DoubleDashIsNotAValidOptionArgument(t *testing.T) {
-	_, err := oldParse("usage: prog [--log=LEVEL] [--] <args>...",
-		[]string{"--log", "--", "1", "2"}, true, "", false, false)
+	_, err := testParser.ParseArgs("usage: prog [--log=LEVEL] [--] <args>...", []string{"--log", "--", "1", "2"}, "")
 	if _, ok := err.(*UserError); !ok {
 		t.Fail()
 	}
 
-	_, err = oldParse(`usage: prog [-l LEVEL] [--] <args>...
-                  options: -l LEVEL`, []string{"-l", "--", "1", "2"}, true, "", false, false)
+	_, err = testParser.ParseArgs(`usage: prog [-l LEVEL] [--] <args>...
+                  options: -l LEVEL`, []string{"-l", "--", "1", "2"}, "")
 	if _, ok := err.(*UserError); !ok {
 		t.Fail()
 	}
@@ -1504,7 +1497,12 @@ func parseOutput(doc string, argv []string, help bool, version string,
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	args, err := oldParse(doc, argv, help, version, optionsFirst, false)
+	p := &Parser{
+		HelpHandler:  PrintHelpOnly,
+		OptionsFirst: optionsFirst,
+		SkipHelpFlag: !help,
+	}
+	args, err := p.ParseArgs(doc, argv, version)
 
 	outChan := make(chan string)
 	go func() {

@@ -93,24 +93,6 @@ func ParseArgs(doc string, argv []string, version string) (map[string]interface{
 	return DefaultParser.ParseArgs(doc, argv, version)
 }
 
-// For backward compatibility with tests, for now.
-func oldParse(doc string, argv []string, help bool, version string, optionsFirst bool, exit ...bool) (map[string]interface{}, error) {
-	exitOk := true
-	if len(exit) > 0 {
-		exitOk = exit[0]
-	}
-	p := &Parser{
-		OptionsFirst: optionsFirst,
-		SkipHelpFlag: !help,
-	}
-	if exitOk {
-		p.HelpHandler = PrintHelpAndExit
-	} else {
-		p.HelpHandler = PrintHelpOnly
-	}
-	return p.ParseArgs(doc, argv, version)
-}
-
 func (p *Parser) ParseArgs(doc string, argv []string, version string) (map[string]interface{}, error) {
 	args, output, err := parse(doc, argv, !p.SkipHelpFlag, version, p.OptionsFirst)
 	p.HelpHandler(err, output)
