@@ -11,7 +11,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -1490,31 +1489,22 @@ func parseTest(raw []byte) ([]testcase, error) {
 	return res, nil
 }
 
-// parseOutput wraps the oldParse() function to also return stdout
-func parseOutput(doc string, argv []string, help bool, version string,
-	optionsFirst bool) (map[string]interface{}, string, error) {
-	stdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
+// parseOutput uses a custom parser which also returns the output
+func parseOutput(doc string, argv []string, help bool, version string, optionsFirst bool) (map[string]interface{}, string, error) {
+	var output string
+	handler := func(err error, usage string) {
+		if _, ok := err.(*UserError); ok { // the user gave us bad input
+			output = usage
+		} else if len(usage) > 0 && err == nil { // the user asked for help or --version
+			output = usage
+		}
+	}
 	p := &Parser{
-		HelpHandler:  PrintHelpOnly,
+		HelpHandler:  handler,
 		OptionsFirst: optionsFirst,
 		SkipHelpFlag: !help,
 	}
 	args, err := p.ParseArgs(doc, argv, version)
-
-	outChan := make(chan string)
-	go func() {
-		var buf bytes.Buffer
-		io.Copy(&buf, r)
-		outChan <- buf.String()
-	}()
-
-	w.Close()
-	os.Stdout = stdout
-	output := <-outChan
-
 	return args, output, err
 }
 
