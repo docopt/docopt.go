@@ -80,10 +80,12 @@ If the last parameter (version) is a non-empty string, it will be printed when `
 parser := &docopt.Parser{
   OptionsFirst: true,
 }
-args, err := parser.Parse(usage, argv, "")
+args, err := parser.ParseArgs(usage, argv, "")
 ```
 
 All three of these return a map of option names to the values parsed from argv, and an error or `nil`.
+
+In particular, setting your own custom `HelpHandler` function makes unit testing your docopt docs with example command line invocations much more enjoyable.
 
 More documentation is available at [godoc.org](https://godoc.org/github.com/aviddiviner/docopt-go).
 
