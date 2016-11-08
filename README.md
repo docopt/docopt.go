@@ -37,7 +37,7 @@ Options:
   --moored      Moored (anchored) mine.
   --drifting    Drifting mine.`
 
-	  arguments, _ := docopt.Parse(usage)
+	  arguments, _ := docopt.ParseDoc(usage)
 	  fmt.Println(arguments)
 }
 ```
