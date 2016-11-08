@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-func ExampleParse() {
+func ExampleParseArgs() {
 	usage := `Usage:
   config_example tcp [<host>] [--force] [--timeout=<seconds>]
   config_example serial <port> [--baud=<rate>] [--timeout=<seconds>]
