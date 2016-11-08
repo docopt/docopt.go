@@ -54,9 +54,9 @@ type Parser struct {
 	// OptionsFirst requires that option flags always come before positional
 	// arguments; otherwise they can overlap.
 	OptionsFirst bool
-	// ParseHelpFlag tells the parser to look for `-h` and `--help` flags and
+	// SkipHelpFlag tells the parser not to look for `-h` and `--help` flags and
 	// call the HelpHandler.
-	ParseHelpFlag bool
+	SkipHelpFlag bool
 }
 
 var PrintHelpAndExit = func(err error, usage string) {
@@ -78,9 +78,9 @@ var PrintHelpOnly = func(err error, usage string) {
 }
 
 var DefaultParser = &Parser{
-	HelpHandler:   PrintHelpAndExit,
-	OptionsFirst:  false,
-	ParseHelpFlag: true,
+	HelpHandler:  PrintHelpAndExit,
+	OptionsFirst: false,
+	SkipHelpFlag: false,
 }
 
 // Parse `argv` based on the command-line interface described in `doc`.
@@ -100,8 +100,8 @@ func oldParse(doc string, argv []string, help bool, version string, optionsFirst
 		exitOk = exit[0]
 	}
 	p := &Parser{
-		OptionsFirst:  optionsFirst,
-		ParseHelpFlag: help,
+		OptionsFirst: optionsFirst,
+		SkipHelpFlag: !help,
 	}
 	if exitOk {
 		p.HelpHandler = PrintHelpAndExit
@@ -112,7 +112,7 @@ func oldParse(doc string, argv []string, help bool, version string, optionsFirst
 }
 
 func (p *Parser) ParseArgs(doc string, argv []string, version string) (map[string]interface{}, error) {
-	args, output, err := parse(doc, argv, p.ParseHelpFlag, version, p.OptionsFirst)
+	args, output, err := parse(doc, argv, !p.SkipHelpFlag, version, p.OptionsFirst)
 	p.HelpHandler(err, output)
 	return args, err
 }
