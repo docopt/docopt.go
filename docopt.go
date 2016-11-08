@@ -54,47 +54,66 @@ type Parser struct {
 	// OptionsFirst requires that option flags always come before positional
 	// arguments; otherwise they can overlap.
 	OptionsFirst bool
+	// ParseHelpFlag tells the parser to look for `-h` and `--help` flags and
+	// call the HelpHandler.
+	ParseHelpFlag bool
+}
+
+var PrintHelpAndExit = func(err error, usage string) {
+	if _, ok := err.(*UserError); ok { // the user gave us bad input
+		fmt.Fprintln(os.Stderr, usage)
+		os.Exit(1)
+	} else if len(usage) > 0 && err == nil { // the user asked for help or --version
+		fmt.Println(usage)
+		os.Exit(0)
+	}
+}
+
+var PrintHelpOnly = func(err error, usage string) {
+	if _, ok := err.(*UserError); ok { // the user gave us bad input
+		fmt.Fprintln(os.Stderr, usage)
+	} else if len(usage) > 0 && err == nil { // the user asked for help or --version
+		fmt.Println(usage)
+	}
 }
 
 var DefaultParser = &Parser{
-	HelpHandler: func(err error, usage string) {
-		if _, ok := err.(*UserError); ok {
-			// the user gave us bad input
-			fmt.Fprintln(os.Stderr, usage)
-			os.Exit(1)
-		} else if len(usage) > 0 && err == nil {
-			// the user asked for help or --version
-			fmt.Println(usage)
-			os.Exit(0)
-		}
-	},
-	OptionsFirst: false,
+	HelpHandler:   PrintHelpAndExit,
+	OptionsFirst:  false,
+	ParseHelpFlag: true,
 }
 
-/*
-Parse `argv` based on the command-line interface described in `doc`.
-*/
-func Parse(doc string, argv []string, help bool, version string,
-	optionsFirst bool, exit ...bool) (map[string]interface{}, error) {
-	// if "false" was the (optional) last arg, don't call os.Exit()
+// Parse `argv` based on the command-line interface described in `doc`.
+func Parse(doc string) (map[string]interface{}, error) {
+	return ParseArgs(doc, os.Args[1:], "")
+}
+
+// Parse `argv` based on the command-line interface described in `doc`.
+func ParseArgs(doc string, argv []string, version string) (map[string]interface{}, error) {
+	return DefaultParser.ParseArgs(doc, argv, version)
+}
+
+// For backward compatibility with tests, for now.
+func oldParse(doc string, argv []string, help bool, version string, optionsFirst bool, exit ...bool) (map[string]interface{}, error) {
 	exitOk := true
 	if len(exit) > 0 {
 		exitOk = exit[0]
 	}
-	args, output, err := parse(doc, argv, help, version, optionsFirst)
-	if _, ok := err.(*UserError); ok {
-		// the user gave us bad input
-		fmt.Fprintln(os.Stderr, output)
-		if exitOk {
-			os.Exit(1)
-		}
-	} else if len(output) > 0 && err == nil {
-		// the user asked for help or `--version`
-		fmt.Println(output)
-		if exitOk {
-			os.Exit(0)
-		}
+	p := &Parser{
+		OptionsFirst:  optionsFirst,
+		ParseHelpFlag: help,
 	}
+	if exitOk {
+		p.HelpHandler = PrintHelpAndExit
+	} else {
+		p.HelpHandler = PrintHelpOnly
+	}
+	return p.ParseArgs(doc, argv, version)
+}
+
+func (p *Parser) ParseArgs(doc string, argv []string, version string) (map[string]interface{}, error) {
+	args, output, err := parse(doc, argv, p.ParseHelpFlag, version, p.OptionsFirst)
+	p.HelpHandler(err, output)
 	return args, err
 }
 
