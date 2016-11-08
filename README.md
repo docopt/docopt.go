@@ -65,7 +65,7 @@ Given a conventional command-line help message, docopt processes the arguments. 
 This package exposes three different APIs, depending on the level of control required. The first, simplest way to parse your docopt usage is to just call:
 
 ```go
-docopt.Parse(usage)
+docopt.ParseDoc(usage)
 ```
 
 This will use `os.Args[1:]` as the argv slice, and use the default parser options. If you want to provide your own version string and args, then use:
@@ -78,6 +78,7 @@ If the last parameter (version) is a non-empty string, it will be printed when `
 
 ```go
 parser := &docopt.Parser{
+  HelpHandler: docopt.PrintHelpOnly,
   OptionsFirst: true,
 }
 args, err := parser.ParseArgs(usage, argv, "")
@@ -85,7 +86,7 @@ args, err := parser.ParseArgs(usage, argv, "")
 
 All three of these return a map of option names to the values parsed from argv, and an error or `nil`.
 
-In particular, setting your own custom `HelpHandler` function makes unit testing your docopt docs with example command line invocations much more enjoyable.
+In particular, setting your own custom `HelpHandler` function makes unit testing your own docs with example command line invocations much more enjoyable.
 
 More documentation is available at [godoc.org](https://godoc.org/github.com/aviddiviner/docopt-go).
 

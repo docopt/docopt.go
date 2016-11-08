@@ -1493,9 +1493,9 @@ func parseTest(raw []byte) ([]testcase, error) {
 func parseOutput(doc string, argv []string, help bool, version string, optionsFirst bool) (map[string]interface{}, string, error) {
 	var output string
 	p := &Parser{
-		HelpHandler:  func(err error, usage string) { output = usage },
-		OptionsFirst: optionsFirst,
-		SkipHelpFlag: !help,
+		HelpHandler:   func(err error, usage string) { output = usage },
+		OptionsFirst:  optionsFirst,
+		SkipHelpFlags: !help,
 	}
 	args, err := p.ParseArgs(doc, argv, version)
 	return args, output, err

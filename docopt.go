@@ -12,28 +12,29 @@ the help message format.
 This package exposes three different APIs, depending on the level of control
 required. The first, simplest way to parse your docopt usage is to just call:
 
-	docopt.Parse(usage)
+	docopt.ParseDoc(usage)
 
-This will use `os.Args[1:]` as the argv slice, and use the default parser
+This will use os.Args[1:] as the argv slice, and use the default parser
 options. If you want to provide your own version string and args, then use:
 
 	docopt.ParseArgs(usage, argv, "1.2.3")
 
 If the last parameter (version) is a non-empty string, it will be printed when
-`--version` is given in the argv slice. Finally, we can instantiate our own
-`docopt.Parser` which gives us control over how things like help messages are
+--version is given in the argv slice. Finally, we can instantiate our own
+docopt.Parser which gives us control over how things like help messages are
 printed and whether to exit after displaying usage messages, etc.
 
 	parser := &docopt.Parser{
+		HelpHandler: docopt.PrintHelpOnly,
 		OptionsFirst: true,
 	}
 	args, err := parser.ParseArgs(usage, argv, "")
 
 All three of these return a map of option names to the values parsed from argv,
-and an error or `nil`.
+and an error or nil.
 
-In particular, setting your own custom `HelpHandler` function makes unit testing
-your docopt docs with example command line invocations much more enjoyable.
+In particular, setting your own custom HelpHandler function makes unit testing
+your own docs with example command line invocations much more enjoyable.
 */
 package docopt
 
@@ -47,16 +48,16 @@ import (
 type Parser struct {
 	// HelpHandler is called when we encounter bad user input, or when the user
 	// asks for help.
-	// By default, this calls `os.Exit(0)` if it handled a built-in option such
-	// as `-h` or `--version`. If the user errored with a wrong command or
+	// By default, this calls os.Exit(0) if it handled a built-in option such
+	// as -h or --version. If the user errored with a wrong command or
 	// options, we exit with a return code of 1.
 	HelpHandler func(err error, usage string)
 	// OptionsFirst requires that option flags always come before positional
 	// arguments; otherwise they can overlap.
 	OptionsFirst bool
-	// SkipHelpFlag tells the parser not to look for `-h` and `--help` flags and
+	// SkipHelpFlags tells the parser not to look for -h and --help flags and
 	// call the HelpHandler.
-	SkipHelpFlag bool
+	SkipHelpFlags bool
 }
 
 var PrintHelpAndExit = func(err error, usage string) {
@@ -80,23 +81,45 @@ var PrintHelpOnly = func(err error, usage string) {
 var NoHelpHandler = func(err error, usage string) {}
 
 var DefaultParser = &Parser{
-	HelpHandler:  PrintHelpAndExit,
-	OptionsFirst: false,
-	SkipHelpFlag: false,
+	HelpHandler:   PrintHelpAndExit,
+	OptionsFirst:  false,
+	SkipHelpFlags: false,
 }
 
-// Parse `argv` based on the command-line interface described in `doc`.
-func Parse(doc string) (map[string]interface{}, error) {
+// Deprecated: Parse is provided for backward compatibility with the original docopt.go package.
+// Please rather make use of ParseDoc, ParseArgs, or use your own custom Parser.
+func Parse(doc string, argv []string, help bool, version string, optionsFirst bool, exit ...bool) (map[string]interface{}, error) {
+	exitOk := true
+	if len(exit) > 0 {
+		exitOk = exit[0]
+	}
+	p := &Parser{
+		OptionsFirst:  optionsFirst,
+		SkipHelpFlags: !help,
+	}
+	if exitOk {
+		p.HelpHandler = PrintHelpAndExit
+	} else {
+		p.HelpHandler = PrintHelpOnly
+	}
+	return p.ParseArgs(doc, argv, version)
+}
+
+// ParseDoc parses os.Args[1:] based on the interface described in doc, using the default parser options.
+func ParseDoc(doc string) (map[string]interface{}, error) {
 	return ParseArgs(doc, os.Args[1:], "")
 }
 
-// Parse `argv` based on the command-line interface described in `doc`.
+// ParseArgs parses custom arguments based on the interface described in doc. If you provide a non-empty version
+// string, then this will be displayed when the --version flag is found. This method uses the default parser options.
 func ParseArgs(doc string, argv []string, version string) (map[string]interface{}, error) {
 	return DefaultParser.ParseArgs(doc, argv, version)
 }
 
+// ParseArgs parses custom arguments based on the interface described in doc. If you provide a non-empty version
+// string, then this will be displayed when the --version flag is found.
 func (p *Parser) ParseArgs(doc string, argv []string, version string) (map[string]interface{}, error) {
-	args, output, err := parse(doc, argv, !p.SkipHelpFlag, version, p.OptionsFirst)
+	args, output, err := parse(doc, argv, !p.SkipHelpFlags, version, p.OptionsFirst)
 	if _, ok := err.(*UserError); ok {
 		// the user gave us bad input
 		p.HelpHandler(err, output)
