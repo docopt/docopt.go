@@ -77,6 +77,8 @@ var PrintHelpOnly = func(err error, usage string) {
 	}
 }
 
+var NoHelpHandler = func(err error, usage string) {}
+
 var DefaultParser = &Parser{
 	HelpHandler:  PrintHelpAndExit,
 	OptionsFirst: false,

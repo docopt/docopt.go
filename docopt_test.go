@@ -19,7 +19,7 @@ import (
 	"testing"
 )
 
-var testParser = &Parser{HelpHandler: PrintHelpOnly}
+var testParser = &Parser{HelpHandler: NoHelpHandler}
 
 func TestPatternFlat(t *testing.T) {
 	q := patternList{
