@@ -60,19 +60,19 @@ type Parser struct {
 }
 
 var PrintHelpAndExit = func(err error, usage string) {
-	if _, ok := err.(*UserError); ok { // the user gave us bad input
+	if err != nil {
 		fmt.Fprintln(os.Stderr, usage)
 		os.Exit(1)
-	} else if len(usage) > 0 && err == nil { // the user asked for help or --version
+	} else {
 		fmt.Println(usage)
 		os.Exit(0)
 	}
 }
 
 var PrintHelpOnly = func(err error, usage string) {
-	if _, ok := err.(*UserError); ok { // the user gave us bad input
+	if err != nil {
 		fmt.Fprintln(os.Stderr, usage)
-	} else if len(usage) > 0 && err == nil { // the user asked for help or --version
+	} else {
 		fmt.Println(usage)
 	}
 }
@@ -97,7 +97,13 @@ func ParseArgs(doc string, argv []string, version string) (map[string]interface{
 
 func (p *Parser) ParseArgs(doc string, argv []string, version string) (map[string]interface{}, error) {
 	args, output, err := parse(doc, argv, !p.SkipHelpFlag, version, p.OptionsFirst)
-	p.HelpHandler(err, output)
+	if _, ok := err.(*UserError); ok {
+		// the user gave us bad input
+		p.HelpHandler(err, output)
+	} else if len(output) > 0 && err == nil {
+		// the user asked for help or --version
+		p.HelpHandler(err, output)
+	}
 	return args, err
 }
 

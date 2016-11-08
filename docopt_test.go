@@ -1492,15 +1492,8 @@ func parseTest(raw []byte) ([]testcase, error) {
 // parseOutput uses a custom parser which also returns the output
 func parseOutput(doc string, argv []string, help bool, version string, optionsFirst bool) (map[string]interface{}, string, error) {
 	var output string
-	handler := func(err error, usage string) {
-		if _, ok := err.(*UserError); ok { // the user gave us bad input
-			output = usage
-		} else if len(usage) > 0 && err == nil { // the user asked for help or --version
-			output = usage
-		}
-	}
 	p := &Parser{
-		HelpHandler:  handler,
+		HelpHandler:  func(err error, usage string) { output = usage },
 		OptionsFirst: optionsFirst,
 		SkipHelpFlag: !help,
 	}
