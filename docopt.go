@@ -107,7 +107,7 @@ func Parse(doc string, argv []string, help bool, version string, optionsFirst bo
 
 // ParseDoc parses os.Args[1:] based on the interface described in doc, using the default parser options.
 func ParseDoc(doc string) (map[string]interface{}, error) {
-	return ParseArgs(doc, os.Args[1:], "")
+	return ParseArgs(doc, nil, "")
 }
 
 // ParseArgs parses custom arguments based on the interface described in doc. If you provide a non-empty version
@@ -119,6 +119,12 @@ func ParseArgs(doc string, argv []string, version string) (map[string]interface{
 // ParseArgs parses custom arguments based on the interface described in doc. If you provide a non-empty version
 // string, then this will be displayed when the --version flag is found.
 func (p *Parser) ParseArgs(doc string, argv []string, version string) (map[string]interface{}, error) {
+	if argv == nil {
+		argv = os.Args[1:]
+	}
+	if p.HelpHandler == nil {
+		p.HelpHandler = DefaultParser.HelpHandler
+	}
 	args, output, err := parse(doc, argv, !p.SkipHelpFlags, version, p.OptionsFirst)
 	if _, ok := err.(*UserError); ok {
 		// the user gave us bad input
