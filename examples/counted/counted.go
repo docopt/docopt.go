@@ -5,8 +5,7 @@ import (
 	"github.com/aviddiviner/docopt-go"
 )
 
-func main() {
-	usage := `Usage: counted --help
+var usage = `Usage: counted --help
        counted -v...
        counted go [go]
        counted (--path=<path>)...
@@ -17,6 +16,7 @@ Try: counted -vvvvvvvvvv
      counted --path ./here --path ./there
      counted this.txt that.txt`
 
+func main() {
 	arguments, _ := docopt.ParseDoc(usage)
 	fmt.Println(arguments)
 }
