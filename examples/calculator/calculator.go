@@ -5,8 +5,7 @@ import (
 	"github.com/aviddiviner/docopt-go"
 )
 
-func main() {
-	usage := `Not a serious example.
+var usage = `Not a serious example.
 
 Usage:
   calculator <value> ( ( + | - | * | / ) <value> )...
@@ -21,6 +20,8 @@ Examples:
 Options:
   -h, --help
 `
+
+func main() {
 	arguments, _ := docopt.ParseDoc(usage)
 	fmt.Println(arguments)
 }
