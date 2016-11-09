@@ -2,7 +2,7 @@ package git
 
 import (
 	"fmt"
-	"github.com/docopt/docopt-go"
+	"github.com/aviddiviner/docopt-go"
 )
 
 func main() {
@@ -23,6 +23,6 @@ options:
     -v, --verbose         be verbose; must be placed before a subcommand
 `
 
-	args, _ := docopt.Parse(usage, nil, true, "", false)
+	args, _ := docopt.ParseDoc(usage)
 	fmt.Println(args)
 }

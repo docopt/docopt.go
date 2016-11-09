@@ -2,7 +2,7 @@ package git
 
 import (
 	"fmt"
-	"github.com/docopt/docopt-go"
+	"github.com/aviddiviner/docopt-go"
 )
 
 func main() {
@@ -32,6 +32,6 @@ options:
     --depth <depth>       create a shallow clone of that depth
 `
 
-	args, _ := docopt.Parse(usage, nil, true, "", false)
+	args, _ := docopt.ParseDoc(usage)
 	fmt.Println(args)
 }

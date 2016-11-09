@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/docopt/docopt-go"
+	"github.com/aviddiviner/docopt-go"
 	"os"
 	"os/exec"
 )
@@ -30,7 +30,8 @@ The most commonly used git commands are:
 
 See 'git help <command>' for more information on a specific command.
 `
-	args, _ := docopt.Parse(usage, nil, true, "git version 1.7.4.4", true)
+	parser := &docopt.Parser{OptionsFirst: true}
+	args, _ := parser.ParseArgs(usage, nil, "git version 1.7.4.4")
 
 	fmt.Println("global arguments:")
 	fmt.Println(args)
@@ -102,7 +103,7 @@ options:
 	--ignore-missing     check if - even missing - files are ignored in dry run
 `
 
-	args, _ := docopt.Parse(usage, nil, true, "", false)
+	args, _ := docopt.ParseDoc(usage)
 	fmt.Println(args)
 	return
 }

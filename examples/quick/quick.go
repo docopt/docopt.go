@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/docopt/docopt-go"
+	"github.com/aviddiviner/docopt-go"
 )
 
 func main() {
 	usage := `Usage:
-  quick_example tcp <host> <port> [--timeout=<seconds>]
-  quick_example serial <port> [--baud=9600] [--timeout=<seconds>]
-  quick_example -h | --help | --version`
+  quick tcp <host> <port> [--timeout=<seconds>]
+  quick serial <port> [--baud=9600] [--timeout=<seconds>]
+  quick -h | --help | --version`
 
-	arguments, _ := docopt.Parse(usage, nil, true, "0.1.1rc", false)
+	arguments, _ := docopt.ParseArgs(usage, nil, "0.1.1rc")
 	fmt.Println(arguments)
 }

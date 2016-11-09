@@ -2,18 +2,18 @@ package main
 
 import (
 	"fmt"
-	"github.com/docopt/docopt-go"
+	"github.com/aviddiviner/docopt-go"
 )
 
 func main() {
-	usage := `Usage: odd_even_example [-h | --help] (ODD EVEN)...
+	usage := `Usage: odd_even [-h | --help] (ODD EVEN)...
 
 Example, try:
-  odd_even_example 1 2 3 4
+  odd_even 1 2 3 4
 
 Options:
   -h, --help`
 
-	arguments, _ := docopt.Parse(usage, nil, true, "", false)
+	arguments, _ := docopt.ParseDoc(usage)
 	fmt.Println(arguments)
 }
