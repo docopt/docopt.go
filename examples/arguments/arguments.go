@@ -5,8 +5,7 @@ import (
 	"github.com/aviddiviner/docopt-go"
 )
 
-func main() {
-	usage := `Usage: arguments [-vqrh] [FILE] ...
+var usage = `Usage: arguments [-vqrh] [FILE] ...
        arguments (--left | --right) CORRECTION FILE
 
 Process FILE and optionally apply correction to either left-hand side or
@@ -24,6 +23,7 @@ Options:
   --left   use left-hand side
   --right  use right-hand side`
 
+func main() {
 	arguments, _ := docopt.ParseDoc(usage)
 	fmt.Println(arguments)
 }

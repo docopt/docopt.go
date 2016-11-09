@@ -7,23 +7,27 @@ import (
 
 func ExampleParseArgs() {
 	usage := `Usage:
-  config_example tcp [<host>] [--force] [--timeout=<seconds>]
-  config_example serial <port> [--baud=<rate>] [--timeout=<seconds>]
-  config_example -h | --help | --version`
-	// parse the command line `comfig_example tcp 127.0.0.1 --force`
+  example tcp [<host>] [--force] [--timeout=<seconds>]
+  example serial <port> [--baud=<rate>] [--timeout=<seconds>]
+  example -h | --help | --version`
+
+	// Parse the command line `example tcp 127.0.0.1 --force`
 	argv := []string{"tcp", "127.0.0.1", "--force"}
 	arguments, _ := ParseArgs(usage, argv, "0.1.1rc")
-	// sort the keys of the arguments map
+
+	// Sort the keys of the arguments map
 	var keys []string
 	for k := range arguments {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	// print the argument keys and values
+
+	// Print the argument keys and values
 	for _, k := range keys {
 		fmt.Printf("%9s %v\n", k, arguments[k])
 	}
-	// output:
+
+	// Output:
 	//    --baud <nil>
 	//   --force true
 	//    --help false
