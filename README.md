@@ -1,11 +1,9 @@
 docopt-go
 =========
 
-[![Build Status](https://travis-ci.org/docopt/docopt-go.svg?branch=master)](https://travis-ci.org/docopt/docopt-go)
-[![Coverage Status](https://coveralls.io/repos/github/docopt/docopt-go/badge.svg)](https://coveralls.io/github/docopt/docopt-go)
-[![GoDoc](https://godoc.org/github.com/docopt/docopt-go?status.svg)](https://godoc.org/github.com/docopt/docopt-go)
-
-> Note: This is a work in progress refactor of the original package here: https://github.com/docopt/docopt.go
+[![Build Status](https://travis-ci.org/docopt/docopt.go.svg?branch=master)](https://travis-ci.org/docopt/docopt.go)
+[![Coverage Status](https://coveralls.io/repos/github/docopt/docopt.go/badge.svg)](https://coveralls.io/github/docopt/docopt.go)
+[![GoDoc](https://godoc.org/github.com/docopt/docopt.go?status.svg)](https://godoc.org/github.com/docopt/docopt.go)
 
 An implementation of [docopt](http://docopt.org/) in the [Go](http://golang.org/) programming language.
 
