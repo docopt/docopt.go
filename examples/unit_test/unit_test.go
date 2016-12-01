@@ -1,4 +1,4 @@
-package unit_test
+package main
 
 import (
 	"github.com/aviddiviner/docopt-go"

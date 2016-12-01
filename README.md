@@ -58,12 +58,6 @@ To install docopt in your `$GOPATH`:
 $ go get github.com/aviddiviner/docopt-go
 ```
 
-## Tests
-
-All tests from the Python version are implemented and passing at [Travis CI](https://travis-ci.org/aviddiviner/docopt-go). New language-agnostic tests have been added to [test_golang.docopt](test_golang.docopt).
-
-To run tests for docopt-go, use `go test`.
-
 ## API
 
 Given a conventional command-line help message, docopt processes the arguments. See https://github.com/docopt/docopt#help-message-format for a description of the help message format.
@@ -103,4 +97,10 @@ More documentation is available at [godoc.org](https://godoc.org/github.com/avid
 
 ## Unit Testing
 
-Unit testing your own usage docs is recommended, so you can be sure that for a given command line invocation, the expected options are set. An example of how to do this is [in the examples folder](blob/master/examples/unit_test/unit_test.go).
+Unit testing your own usage docs is recommended, so you can be sure that for a given command line invocation, the expected options are set. An example of how to do this is [in the examples folder](examples/unit_test/unit_test.go).
+
+## Tests
+
+All tests from the Python version are implemented and passing at [Travis CI](https://travis-ci.org/aviddiviner/docopt-go). New language-agnostic tests have been added to [test_golang.docopt](test_golang.docopt).
+
+To run tests for docopt-go, use `go test`.
