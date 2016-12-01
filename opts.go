@@ -15,6 +15,22 @@ func errStrconv(key string, convErr error) error {
 	return fmt.Errorf("key: %s failed type conversion: %s", key, convErr)
 }
 
+// Opts is a map of command line options to their values, with some convenience
+// methods for value type conversion (bool, float64, int, string). For example,
+// to get an option value as an int:
+//
+// 	opts, _ := docopt.ParseDoc("Usage: sleep <seconds>")
+// 	secs, _ := opts.Int("<seconds>")
+//
+// You can still treat the Opts as a regular map, and do any type checking and
+// conversion that you want to yourself. For example:
+//
+// 	if s, ok := opts["<binary>"].(string); ok {
+// 		if val, err := strconv.ParseUint(s, 2, 64); err != nil { ... }
+// 	}
+//
+// Note that any non-boolean option / flag will have a string value in the
+// underlying map.
 type Opts map[string]interface{}
 
 func (o Opts) String(key string) (s string, err error) {

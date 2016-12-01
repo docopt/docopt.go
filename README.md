@@ -81,12 +81,17 @@ parser := &docopt.Parser{
   HelpHandler: docopt.PrintHelpOnly,
   OptionsFirst: true,
 }
-args, err := parser.ParseArgs(usage, argv, "")
+opts, err := parser.ParseArgs(usage, argv, "")
 ```
 
-All three of these return a map of option names to the values parsed from argv, and an error or `nil`.
-
 In particular, setting your own custom `HelpHandler` function makes unit testing your own docs with example command line invocations much more enjoyable.
+
+All three of these return a map of option names to the values parsed from argv, and an error or nil. You can get the values using the helpers, or just treat it as a regular map:
+
+```go
+flag, _ := opts.Bool("--flag")
+secs, _ := opts.Int("<seconds>")
+```
 
 More documentation is available at [godoc.org](https://godoc.org/github.com/aviddiviner/docopt-go).
 
