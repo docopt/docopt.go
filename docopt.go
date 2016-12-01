@@ -86,6 +86,23 @@ var DefaultParser = &Parser{
 	SkipHelpFlags: false,
 }
 
+// ParseDoc parses os.Args[1:] based on the interface described in doc, using the default parser options.
+func ParseDoc(doc string) (Opts, error) {
+	return ParseArgs(doc, nil, "")
+}
+
+// ParseArgs parses custom arguments based on the interface described in doc. If you provide a non-empty version
+// string, then this will be displayed when the --version flag is found. This method uses the default parser options.
+func ParseArgs(doc string, argv []string, version string) (Opts, error) {
+	return DefaultParser.ParseArgs(doc, argv, version)
+}
+
+// ParseArgs parses custom arguments based on the interface described in doc. If you provide a non-empty version
+// string, then this will be displayed when the --version flag is found.
+func (p *Parser) ParseArgs(doc string, argv []string, version string) (Opts, error) {
+	return p.parse(doc, argv, version)
+}
+
 // Deprecated: Parse is provided for backward compatibility with the original docopt.go package.
 // Please rather make use of ParseDoc, ParseArgs, or use your own custom Parser.
 func Parse(doc string, argv []string, help bool, version string, optionsFirst bool, exit ...bool) (map[string]interface{}, error) {
@@ -102,23 +119,10 @@ func Parse(doc string, argv []string, help bool, version string, optionsFirst bo
 	} else {
 		p.HelpHandler = PrintHelpOnly
 	}
-	return p.ParseArgs(doc, argv, version)
+	return p.parse(doc, argv, version)
 }
 
-// ParseDoc parses os.Args[1:] based on the interface described in doc, using the default parser options.
-func ParseDoc(doc string) (map[string]interface{}, error) {
-	return ParseArgs(doc, nil, "")
-}
-
-// ParseArgs parses custom arguments based on the interface described in doc. If you provide a non-empty version
-// string, then this will be displayed when the --version flag is found. This method uses the default parser options.
-func ParseArgs(doc string, argv []string, version string) (map[string]interface{}, error) {
-	return DefaultParser.ParseArgs(doc, argv, version)
-}
-
-// ParseArgs parses custom arguments based on the interface described in doc. If you provide a non-empty version
-// string, then this will be displayed when the --version flag is found.
-func (p *Parser) ParseArgs(doc string, argv []string, version string) (map[string]interface{}, error) {
+func (p *Parser) parse(doc string, argv []string, version string) (map[string]interface{}, error) {
 	if argv == nil {
 		argv = os.Args[1:]
 	}
@@ -135,6 +139,8 @@ func (p *Parser) ParseArgs(doc string, argv []string, version string) (map[strin
 	}
 	return args, err
 }
+
+// -----------------------------------------------------------------------------
 
 // parse and return a map of args, output and all errors
 func parse(doc string, argv []string, help bool, version string, optionsFirst bool) (args map[string]interface{}, output string, err error) {
