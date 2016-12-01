@@ -1,9 +1,9 @@
 docopt-go
 =========
 
-[![Build Status](https://travis-ci.org/aviddiviner/docopt-go.svg?branch=master)](https://travis-ci.org/aviddiviner/docopt-go)
-[![Coverage Status](https://coveralls.io/repos/github/aviddiviner/docopt-go/badge.svg)](https://coveralls.io/github/aviddiviner/docopt-go)
-[![GoDoc](https://godoc.org/github.com/aviddiviner/docopt-go?status.svg)](https://godoc.org/github.com/aviddiviner/docopt-go)
+[![Build Status](https://travis-ci.org/docopt/docopt-go.svg?branch=master)](https://travis-ci.org/docopt/docopt-go)
+[![Coverage Status](https://coveralls.io/repos/github/docopt/docopt-go/badge.svg)](https://coveralls.io/github/docopt/docopt-go)
+[![GoDoc](https://godoc.org/github.com/docopt/docopt-go?status.svg)](https://godoc.org/github.com/docopt/docopt-go)
 
 > Note: This is a work in progress refactor of the original package here: https://github.com/docopt/docopt.go
 
@@ -16,7 +16,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/aviddiviner/docopt-go"
+	"github.com/docopt/docopt-go"
 )
 
 func main() {
@@ -46,16 +46,16 @@ Options:
 
 ## Installation
 
-To use docopt in your Go code:
+⚠ Use the alias "docopt-go". To use docopt in your Go code:
 
 ```go
-import "github.com/aviddiviner/docopt-go"
+import "github.com/docopt/docopt-go"
 ```
 
 To install docopt in your `$GOPATH`:
 
 ```console
-$ go get github.com/aviddiviner/docopt-go
+$ go get github.com/docopt/docopt-go
 ```
 
 ## API
@@ -93,7 +93,7 @@ flag, _ := opts.Bool("--flag")
 secs, _ := opts.Int("<seconds>")
 ```
 
-More documentation is available at [godoc.org](https://godoc.org/github.com/aviddiviner/docopt-go).
+More documentation is available at [godoc.org](https://godoc.org/github.com/docopt/docopt-go).
 
 ## Unit Testing
 
@@ -101,6 +101,6 @@ Unit testing your own usage docs is recommended, so you can be sure that for a g
 
 ## Tests
 
-All tests from the Python version are implemented and passing at [Travis CI](https://travis-ci.org/aviddiviner/docopt-go). New language-agnostic tests have been added to [test_golang.docopt](test_golang.docopt).
+All tests from the Python version are implemented and passing at [Travis CI](https://travis-ci.org/docopt/docopt-go). New language-agnostic tests have been added to [test_golang.docopt](test_golang.docopt).
 
 To run tests for docopt-go, use `go test`.

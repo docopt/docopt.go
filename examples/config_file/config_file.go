@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/aviddiviner/docopt-go"
+	"github.com/docopt/docopt-go"
 	"strings"
 )
 

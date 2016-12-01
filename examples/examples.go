@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/aviddiviner/docopt-go"
+	"github.com/docopt/docopt-go"
 )
 
 // TestUsage is a helper used to test the output from the examples in this folder.

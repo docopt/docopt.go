@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/aviddiviner/docopt-go"
+	"github.com/docopt/docopt-go"
 	"reflect"
 	"testing"
 )
