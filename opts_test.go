@@ -2,6 +2,7 @@ package docopt
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -137,37 +138,68 @@ func TestOptsBind(t *testing.T) {
 }
 
 type testTypedOptions struct {
-	seconds int     `docopt:"-s"`
-	Size    int     `docopt:"-n"`
-	Idle    float64 `docopt:"-i"`
-	Command string  `docopt:"<command>"`
-	Force   bool    `docopt:"--force"`
-	Verbose bool    `docopt:"--verbose"`
+	secret int `docopt:"-s"`
+
+	Number  int
+	Idle    float64
+	Pointer uintptr     `docopt:"<ptr>"`
+	Values  []int       `docopt:"<values>"`
+	Iface   interface{} `docopt:"IFACE"`
 }
 
 func TestBindErrors(t *testing.T) {
-	const usage = "Usage: prog [-s]"
+	var testParser = &Parser{HelpHandler: NoHelpHandler, SkipHelpFlags: true}
 	for i, tc := range []struct {
 		usage       string
+		command     string
 		expectedErr string
 	}{
 		{
 			`Usage: prog [-s]`,
+			`prog`,
 			`mapping of "-s" is not found in given struct, or is an unexported field`,
 		},
 		{
-			`Usage: prog [-n] [-i] [<command>]`,
-			`value of "-n" is not assignable to "Size" field`,
+			`Usage: prog [--number]`,
+			`prog`,
+			`value of "--number" is not assignable to "Number" field`,
 		},
+		{
+			`Usage: prog [--number=X]`,
+			`prog --number=abc`,
+			`value of "--number" is not assignable to "Number" field`,
+		},
+		{
+			`Usage: prog [--idle=X]`,
+			`prog --idle=4.1.1`,
+			`value of "--idle" is not assignable to "Idle" field`,
+		},
+		{
+			`Usage: prog <ptr>`,
+			`prog 123`,
+			`value of "<ptr>" is not assignable to "Pointer" field`,
+		},
+		{
+			`Usage: prog [<values>...]`,
+			`prog 123 456`,
+			`value of "<values>" is not assignable to "Values" field`,
+		},
+		// {
+		// 	`Usage: prog [IFACE ...]`,
+		// 	`prog 123 456`,
+		// 	`...`,
+		// },
 	} {
-		opts, err := ParseArgs(tc.usage, []string{}, "")
+		argv := strings.Split(tc.command, " ")[1:]
+		opts, err := testParser.ParseArgs(tc.usage, argv, "")
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("testcase: %d parse err: %q", i, err)
 		}
 		var o testTypedOptions
+		t.Logf("%#v\n", opts)
 		if err := opts.Bind(&o); err != nil {
 			if err.Error() != tc.expectedErr {
-				t.Errorf("testcase: %d result: %q expect: %q", i, err.Error(), tc.expectedErr)
+				t.Fatalf("testcase: %d result: %q expect: %q", i, err.Error(), tc.expectedErr)
 			}
 		} else {
 			t.Fatal("error expected")

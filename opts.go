@@ -9,13 +9,13 @@ import (
 )
 
 func errKey(key string) error {
-	return fmt.Errorf("no such key: %s", key)
+	return fmt.Errorf("no such key: %q", key)
 }
 func errType(key string) error {
-	return fmt.Errorf("key: %s failed type conversion", key)
+	return fmt.Errorf("key: %q failed type conversion", key)
 }
 func errStrconv(key string, convErr error) error {
-	return fmt.Errorf("key: %s failed type conversion: %s", key, convErr)
+	return fmt.Errorf("key: %q failed type conversion: %s", key, convErr)
 }
 
 // Opts is a map of command line options to their values, with some convenience
@@ -99,21 +99,23 @@ func (o Opts) Float64(key string) (f float64, err error) {
 // 	Field int                     // Field mapped from key "--field"
 // 	F int                         // F mapped from key "-f"
 //
+// Bind will handle conversion to bool, float64, int or string types.
 func (o Opts) Bind(v interface{}) error {
-	value := reflect.ValueOf(v)
-	if value.Kind() != reflect.Ptr {
+	structVal := reflect.ValueOf(v)
+	if structVal.Kind() != reflect.Ptr {
 		return newError("'v' argument is not pointer to struct type")
 	}
-	for value.Kind() == reflect.Ptr {
-		value = value.Elem()
+	for structVal.Kind() == reflect.Ptr {
+		structVal = structVal.Elem()
 	}
-	if value.Kind() != reflect.Struct {
+	if structVal.Kind() != reflect.Struct {
 		return newError("'v' argument is not pointer to struct type")
 	}
-	typ := value.Type()
+	structType := structVal.Type()
+
 	indexMap := make(map[string]int)
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
+	for i := 0; i < structType.NumField(); i++ {
+		field := structType.Field(i)
 		if isUnexportedField(field) || field.Anonymous {
 			continue
 		}
@@ -132,6 +134,7 @@ func (o Opts) Bind(v interface{}) error {
 			indexMap[t] = i
 		}
 	}
+
 	for k, v := range o {
 		i, ok := indexMap[k]
 		if !ok {
@@ -140,19 +143,40 @@ func (o Opts) Bind(v interface{}) error {
 			}
 			return newError("mapping of %q is not found in given struct, or is an unexported field", k)
 		}
-		field := value.Field(i)
-		if field.Interface() != reflect.Zero(field.Type()).Interface() {
+		field := structVal.Field(i)
+		// If the struct's field is already non-zero, then don't change it.
+		if !reflect.DeepEqual(field.Interface(), reflect.Zero(field.Type()).Interface()) {
 			continue
 		}
-		val := reflect.ValueOf(v)
-		if !val.Type().AssignableTo(field.Type()) {
-			return newError("value of %q is not assignable to %q field", k, value.Type().Field(i).Name)
+		optVal := reflect.ValueOf(v)
+		// Option value is the zero Value, so we can't get its .Type(). No need to assign anyway, so move along.
+		if !optVal.IsValid() {
+			continue
 		}
 		if !field.CanSet() {
-			return newError("%q field cannot be set", value.Type().Field(i).Name)
+			return newError("%q field cannot be set", structType.Field(i).Name)
 		}
-		field.Set(val)
+		// Try to assign now if able. bool and string values should be assignable already.
+		if optVal.Type().AssignableTo(field.Type()) {
+			field.Set(optVal)
+			continue
+		}
+		// Try to convert the value and assign if able.
+		switch field.Kind() {
+		case reflect.Int:
+			if x, err := o.Int(k); err == nil {
+				field.SetInt(int64(x))
+				continue
+			}
+		case reflect.Float64:
+			if x, err := o.Float64(k); err == nil {
+				field.SetFloat(x)
+				continue
+			}
+		}
+		return newError("value of %q is not assignable to %q field", k, structType.Field(i).Name)
 	}
+
 	return nil
 }
 
