@@ -82,3 +82,56 @@ func TestOptsErrors(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestOptsBind(t *testing.T) {
+	var testParser = &Parser{HelpHandler: NoHelpHandler, SkipHelpFlags: true}
+	const usage = "Usage: prog [-h|--help] [-v] [-f] <command>"
+	for i, c := range []struct {
+		argv   []string
+		expect testoption
+	}{
+		{[]string{"-v", "test_cmd"}, testoption{
+			Command: "test_cmd",
+			Help:    false,
+			Verbose: true,
+			F:       false,
+		}},
+		{[]string{"-h", "test_cmd"}, testoption{
+			Command: "test_cmd",
+			Help:    true,
+			Verbose: false,
+			F:       false,
+		}},
+		{[]string{"--help", "test_cmd"}, testoption{
+			Command: "test_cmd",
+			Help:    true,
+			Verbose: false,
+			F:       false,
+		}},
+		{[]string{"-f", "test_cmd"}, testoption{
+			Command: "test_cmd",
+			Help:    false,
+			Verbose: false,
+			F:       true,
+		}},
+	} {
+		result := testoption{}
+		v, err := testParser.ParseArgs(usage, c.argv, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := v.Bind(&result); err != nil {
+			t.Fatal(err)
+		}
+		if reflect.DeepEqual(result, c.expect) != true {
+			t.Errorf("testcase: %#v result: %#v expect: %#v\n", i, result, c.expect)
+		}
+	}
+}
+
+type testoption struct {
+	Command string `docopt:"<command>"`
+	Help    bool   `docopt:"-h,--help"`
+	Verbose bool   `docopt:"-v"`
+	F       bool
+}
