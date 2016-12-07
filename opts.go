@@ -93,11 +93,11 @@ func (o Opts) Float64(key string) (f float64, err error) {
 // Each key in Opts will be mapped to an exported field of the struct pointed
 // to by `v`, as follows:
 //
-// 	Field int `docopt:"-"`        // Field is ignored by Bind
-// 	Field int `docopt:"--help"`   // Field mapped from key "--help"
-// 	Field int `docopt:"-h"`       // Field mapped from key "-h"
-// 	Field int                     // Field mapped from key "--field"
-// 	F int                         // F mapped from key "-f"
+// 	field int                     // `field` is ignored by Bind
+// 	Field int `docopt:"--help"`   // `Field` mapped from key "--help"
+// 	Field int `docopt:"-h"`       // `Field` mapped from key "-h"
+// 	Field int                     // `Field` mapped from key "--field"
+// 	F int                         // `F` mapped from key "-f"
 //
 // Bind will handle conversion to bool, float64, int or string types.
 func (o Opts) Bind(v interface{}) error {
@@ -163,17 +163,26 @@ func (o Opts) Bind(v interface{}) error {
 		}
 		// Try to convert the value and assign if able.
 		switch field.Kind() {
-		case reflect.Int:
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			if x, err := o.Int(k); err == nil {
 				field.SetInt(int64(x))
 				continue
 			}
-		case reflect.Float64:
+		case reflect.Float32, reflect.Float64:
 			if x, err := o.Float64(k); err == nil {
 				field.SetFloat(x)
 				continue
 			}
 		}
+		// TODO: Something clever (recursive?) with non-string slices.
+		// case reflect.Slice:
+		// 	if optVal.Kind() == reflect.Slice {
+		// 		for i := 0; i < optVal.Len(); i++ {
+		// 			sliceVal := optVal.Index(i)
+		// 			fmt.Printf("%v", sliceVal)
+		// 		}
+		// 		fmt.Printf("\n")
+		// 	}
 		return newError("value of %q is not assignable to %q field", k, structType.Field(i).Name)
 	}
 

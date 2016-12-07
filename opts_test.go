@@ -140,10 +140,11 @@ func TestOptsBind(t *testing.T) {
 type testTypedOptions struct {
 	secret int `docopt:"-s"`
 
-	Number  int
-	Idle    float64
+	Number  int16
+	Idle    float32
 	Pointer uintptr     `docopt:"<ptr>"`
-	Values  []int       `docopt:"<values>"`
+	Ints    []int       `docopt:"<values>"`
+	Strings []string    `docopt:"STRINGS"`
 	Iface   interface{} `docopt:"IFACE"`
 }
 
@@ -170,11 +171,6 @@ func TestBindErrors(t *testing.T) {
 			`value of "--number" is not assignable to "Number" field`,
 		},
 		{
-			`Usage: prog [--idle=X]`,
-			`prog --idle=4.1.1`,
-			`value of "--idle" is not assignable to "Idle" field`,
-		},
-		{
 			`Usage: prog <ptr>`,
 			`prog 123`,
 			`value of "<ptr>" is not assignable to "Pointer" field`,
@@ -182,13 +178,13 @@ func TestBindErrors(t *testing.T) {
 		{
 			`Usage: prog [<values>...]`,
 			`prog 123 456`,
-			`value of "<values>" is not assignable to "Values" field`,
+			`value of "<values>" is not assignable to "Ints" field`,
 		},
-		// {
-		// 	`Usage: prog [IFACE ...]`,
-		// 	`prog 123 456`,
-		// 	`...`,
-		// },
+		{
+			`Usage: prog [-] [IFACE ...]`,
+			`prog - 123 456 asd`,
+			`mapping of "-" is not found in given struct, or is an unexported field`,
+		},
 	} {
 		argv := strings.Split(tc.command, " ")[1:]
 		opts, err := testParser.ParseArgs(tc.usage, argv, "")
@@ -203,6 +199,38 @@ func TestBindErrors(t *testing.T) {
 			}
 		} else {
 			t.Fatal("error expected")
+		}
+	}
+}
+
+func TestBindSuccess(t *testing.T) {
+	var testParser = &Parser{HelpHandler: NoHelpHandler, SkipHelpFlags: true}
+	for i, tc := range []struct {
+		usage   string
+		command string
+	}{
+		{
+			`Usage: prog [--number=X]`,
+			`prog --number=123`,
+		},
+		{
+			`Usage: prog [--idle=X]`,
+			`prog --idle=4.1`,
+		},
+		{
+			`Usage: prog [STRINGS ...]`,
+			`prog 123 456 asd`,
+		},
+	} {
+		argv := strings.Split(tc.command, " ")[1:]
+		opts, err := testParser.ParseArgs(tc.usage, argv, "")
+		if err != nil {
+			t.Fatalf("testcase: %d parse err: %q", i, err)
+		}
+		var o testTypedOptions
+		t.Logf("%#v\n", opts)
+		if err := opts.Bind(&o); err != nil {
+			t.Fatalf("testcase: %d error: %q", i, err.Error())
 		}
 	}
 }
