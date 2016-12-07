@@ -138,7 +138,7 @@ func (o Opts) Bind(v interface{}) error {
 			if k == "--help" || k == "--version" {
 				continue
 			}
-			return newError("mapping of '%s' is not found in given struct, or an unexported field", k)
+			return newError("mapping of %q is not found in given struct, or is an unexported field", k)
 		}
 		field := value.Field(i)
 		if field.Interface() != reflect.Zero(field.Type()).Interface() {
@@ -146,10 +146,10 @@ func (o Opts) Bind(v interface{}) error {
 		}
 		val := reflect.ValueOf(v)
 		if !val.Type().AssignableTo(field.Type()) {
-			return newError("value of '%s' is not assignable to '%s' field", k, value.Type().Field(i).Name)
+			return newError("value of %q is not assignable to %q field", k, value.Type().Field(i).Name)
 		}
 		if !field.CanSet() {
-			return newError("'%s' field cannot be set", value.Type().Field(i).Name)
+			return newError("%q field cannot be set", value.Type().Field(i).Name)
 		}
 		field.Set(val)
 	}
