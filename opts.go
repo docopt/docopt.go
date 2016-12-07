@@ -135,6 +135,9 @@ func (o Opts) Bind(v interface{}) error {
 	for k, v := range o {
 		i, ok := indexMap[k]
 		if !ok {
+			if k == "--help" || k == "--version" {
+				continue
+			}
 			return newError("mapping of '%s' is not found in given struct, or an unexported field", k)
 		}
 		field := value.Field(i)
