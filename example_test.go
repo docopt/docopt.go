@@ -7,7 +7,7 @@ import (
 
 func ExampleParseArgs() {
 	usage := `Usage:
-  example tcp [<host>] [--force] [--timeout=<seconds>]
+  example tcp [<host>...] [--force] [--timeout=<seconds>]
   example serial <port> [--baud=<rate>] [--timeout=<seconds>]
   example --help | --version`
 
@@ -33,7 +33,7 @@ func ExampleParseArgs() {
 	//    --help false
 	// --timeout <nil>
 	// --version false
-	//    <host> 127.0.0.1
+	//    <host> [127.0.0.1]
 	//    <port> <nil>
 	//    serial false
 	//       tcp true
@@ -41,7 +41,7 @@ func ExampleParseArgs() {
 
 func ExampleOpts_Bind() {
 	usage := `Usage:
-  example tcp [<host>] [--force] [--timeout=<seconds>]
+  example tcp [<host>...] [--force] [--timeout=<seconds>]
   example serial <port> [--baud=<rate>] [--timeout=<seconds>]
   example --help | --version`
 
@@ -52,7 +52,7 @@ func ExampleOpts_Bind() {
 	var conf struct {
 		Tcp     bool
 		Serial  bool
-		Host    string
+		Host    []string
 		Port    int
 		Force   bool
 		Timeout int
