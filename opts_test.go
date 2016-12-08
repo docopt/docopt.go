@@ -141,6 +141,7 @@ func TestOptsBind(t *testing.T) {
 type testTypedOptions struct {
 	secret int `docopt:"-s"`
 
+	V       bool
 	Number  int16
 	Idle    float32
 	Pointer uintptr     `docopt:"<ptr>"`
@@ -160,6 +161,11 @@ func TestBindErrors(t *testing.T) {
 			`Usage: prog [-s]`,
 			`prog`,
 			`mapping of "-s" is not found in given struct, or is an unexported field`,
+		},
+		{
+			`Usage: prog [--v]`,
+			`prog`,
+			`mapping of "--v" is not found in given struct, or is an unexported field`,
 		},
 		{
 			`Usage: prog [--number]`,
@@ -211,8 +217,20 @@ func TestBindSuccess(t *testing.T) {
 		command string
 	}{
 		{
+			`Usage: prog [-v]`,
+			`prog -v`,
+		},
+		{
 			`Usage: prog [--number=X]`,
 			`prog --number=123`,
+		},
+		{
+			`Usage: prog <number>`,
+			`prog 123`,
+		},
+		{
+			`Usage: prog NUMBER`,
+			`prog 123`,
 		},
 		{
 			`Usage: prog [--idle=X]`,
@@ -221,6 +239,10 @@ func TestBindSuccess(t *testing.T) {
 		{
 			`Usage: prog [STRINGS ...]`,
 			`prog 123 456 asd`,
+		},
+		{
+			`Usage: prog [--help]`,
+			`prog --help`,
 		},
 	} {
 		argv := strings.Split(tc.command, " ")[1:]

@@ -39,11 +39,11 @@ as a regular map:
 Additionally, you can `Bind` these to a struct, assigning option values to the
 exported fields of that struct, all at once.
 
-	var options struct {
-		Command string `docopt:"<command>"`
+	var config struct {
+		Command string `docopt:"<cmd>"`
 		Tries   int    `docopt:"-n"`
 		Force   bool   // Gets the value of --force
 	}
-	opts.Bind(&options)
+	opts.Bind(&config)
 */
 package docopt

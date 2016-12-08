@@ -13,18 +13,18 @@ func ExampleParseArgs() {
 
 	// Parse the command line `example tcp 127.0.0.1 --force`
 	argv := []string{"tcp", "127.0.0.1", "--force"}
-	arguments, _ := ParseArgs(usage, argv, "0.1.1rc")
+	opts, _ := ParseArgs(usage, argv, "0.1.1rc")
 
-	// Sort the keys of the arguments map
+	// Sort the keys of the options map
 	var keys []string
-	for k := range arguments {
+	for k := range opts {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
-	// Print the argument keys and values
+	// Print the option keys and values
 	for _, k := range keys {
-		fmt.Printf("%9s %v\n", k, arguments[k])
+		fmt.Printf("%9s %v\n", k, opts[k])
 	}
 
 	// Output:
@@ -45,33 +45,25 @@ func ExampleOpts_Bind() {
   example serial <port> [--baud=<rate>] [--timeout=<seconds>]
   example --help | --version`
 
-	type options struct {
-		Tcp     bool   `docopt:"tcp"`
-		Serial  bool   `docopt:"serial"`
-		Host    string `docopt:"<host>"`
-		Port    int    `docopt:"<port>"`
+	// Parse the command line `example serial 443 --baud=9600`
+	argv := []string{"serial", "443", "--baud=9600"}
+	opts, _ := ParseArgs(usage, argv, "0.1.1rc")
+
+	var conf struct {
+		Tcp     bool
+		Serial  bool
+		Host    string
+		Port    int
 		Force   bool
 		Timeout int
 		Baud    int
 	}
+	opts.Bind(&conf)
 
-	// Parse the command line `example tcp 127.0.0.1 --force`
-	argv := []string{"tcp", "127.0.0.1", "--force"}
-	arguments, _ := ParseArgs(usage, argv, "0.1.1rc")
-
-	var opts options
-	arguments.Bind(&opts)
-	fmt.Printf("%+v\n", opts)
-
-	// Parse the command line `example serial 443 --baud=9600`
-	argv = []string{"serial", "443", "--baud=9600"}
-	arguments, _ = ParseArgs(usage, argv, "0.1.1rc")
-
-	opts = options{}
-	arguments.Bind(&opts)
-	fmt.Printf("%+v\n", opts)
+	if conf.Serial {
+		fmt.Printf("port: %d, baud: %d", conf.Port, conf.Baud)
+	}
 
 	// Output:
-	// {Tcp:true Serial:false Host:127.0.0.1 Port:0 Force:true Timeout:0 Baud:0}
-	// {Tcp:false Serial:true Host: Port:443 Force:false Timeout:0 Baud:9600}
+	// port: 443, baud: 9600
 }

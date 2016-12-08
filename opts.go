@@ -113,49 +113,76 @@ func (o Opts) Bind(v interface{}) error {
 	}
 	structType := structVal.Type()
 
-	indexMap := make(map[string]int)
+	tagged := make(map[string]int)   // Tagged field tags
+	untagged := make(map[string]int) // Untagged field names
+
 	for i := 0; i < structType.NumField(); i++ {
 		field := structType.Field(i)
 		if isUnexportedField(field) || field.Anonymous {
 			continue
 		}
-		// Check that field is zero valued, then add it to indexMap to be populated later.
-		mapField := func(key string) error {
-			fieldVal := structVal.Field(i)
-			zeroVal := reflect.Zero(field.Type)
-			if !reflect.DeepEqual(fieldVal.Interface(), zeroVal.Interface()) {
-				return newError("%q field is non-zero, will be overwritten by value of %q", field.Name, key)
-			}
-			indexMap[key] = i
-			return nil
-		}
 		tag := field.Tag.Get("docopt")
 		if tag == "" {
-			key := strings.ToLower(field.Name)
-			if len(field.Name) == 1 {
-				key = "-" + key
-			} else {
-				key = "--" + key
-			}
-			if err := mapField(key); err != nil {
-				return err
-			}
+			n := strings.ToLower(field.Name)
+			untagged[n] = i
 			continue
 		}
 		for _, t := range strings.Split(tag, ",") {
-			if err := mapField(t); err != nil {
-				return err
-			}
+			tagged[t] = i
 		}
 	}
 
-	for k, v := range o {
-		i, ok := indexMap[k]
-		if !ok {
-			if k == "--help" || k == "--version" {
+	// Get the index of the struct field to use, based on the option key.
+	// Returns -1 if nothing is matched.
+	getFieldIndex := func(key string) int {
+		if i, ok := tagged[key]; ok {
+			return i
+		}
+		switch {
+		case strings.HasPrefix(key, "--") && len(key[2:]) > 1:
+			if i, ok := untagged[strings.ToLower(key[2:])]; ok {
+				return i
+			}
+		case strings.HasPrefix(key, "-") && len(key[1:]) == 1:
+			if i, ok := untagged[strings.ToLower(key[1:])]; ok {
+				return i
+			}
+		case strings.HasPrefix(key, "<") && strings.HasSuffix(key, ">"):
+			if i, ok := untagged[strings.ToLower(key[1:len(key)-1])]; ok {
+				return i
+			}
+		default:
+			if i, ok := untagged[strings.ToLower(key)]; ok {
+				return i
+			}
+		}
+		return -1
+	}
+
+	indexMap := make(map[string]int) // Option keys to field index
+
+	// Pre-check that option keys are mapped to fields and fields are zero valued, before populating them.
+	for k := range o {
+		i := getFieldIndex(k)
+		if i < 0 {
+			if k == "--help" || k == "--version" { // Don't require these to be mapped.
 				continue
 			}
 			return newError("mapping of %q is not found in given struct, or is an unexported field", k)
+		}
+		fieldVal := structVal.Field(i)
+		zeroVal := reflect.Zero(fieldVal.Type())
+		if !reflect.DeepEqual(fieldVal.Interface(), zeroVal.Interface()) {
+			return newError("%q field is non-zero, will be overwritten by value of %q", structType.Field(i).Name, k)
+		}
+		indexMap[k] = i
+	}
+
+	// Populate fields with option values.
+	for k, v := range o {
+		i, ok := indexMap[k]
+		if !ok {
+			continue // Not mapped.
 		}
 		field := structVal.Field(i)
 		if !reflect.DeepEqual(field.Interface(), reflect.Zero(field.Type()).Interface()) {

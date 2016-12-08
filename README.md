@@ -97,12 +97,12 @@ Additionally, you can `Bind` these to a struct, assigning option values to the
 exported fields of that struct, all at once.
 
 ```go
-var options struct {
-  Command string `docopt:"<command>"`
+var config struct {
+  Command string `docopt:"<cmd>"`
   Tries   int    `docopt:"-n"`
   Force   bool   // Gets the value of --force
 }
-opts.Bind(&options)
+opts.Bind(&config)
 ```
 
 More documentation is available at [godoc.org](https://godoc.org/github.com/aviddiviner/docopt-go).
