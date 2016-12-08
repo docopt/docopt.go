@@ -250,3 +250,15 @@ func TestBindSimpleStruct(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestBindToStructWhichAlreadyHasValue(t *testing.T) {
+	var testParser = &Parser{HelpHandler: NoHelpHandler, SkipHelpFlags: true}
+	opts, err := testParser.ParseArgs("Usage: prog [--number=X]", []string{"--number=123"}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var opt = struct{ Number int }{1}
+	if err := opts.Bind(&opt); err == nil {
+		t.Fatal("error expected")
+	}
+}

@@ -119,6 +119,16 @@ func (o Opts) Bind(v interface{}) error {
 		if isUnexportedField(field) || field.Anonymous {
 			continue
 		}
+		// Check that field is zero valued, then add it to indexMap to be populated later.
+		mapField := func(key string) error {
+			fieldVal := structVal.Field(i)
+			zeroVal := reflect.Zero(field.Type)
+			if !reflect.DeepEqual(fieldVal.Interface(), zeroVal.Interface()) {
+				return newError("%q field is non-zero, will be overwritten by value of %q", field.Name, key)
+			}
+			indexMap[key] = i
+			return nil
+		}
 		tag := field.Tag.Get("docopt")
 		if tag == "" {
 			key := strings.ToLower(field.Name)
@@ -127,11 +137,15 @@ func (o Opts) Bind(v interface{}) error {
 			} else {
 				key = "--" + key
 			}
-			indexMap[key] = i
+			if err := mapField(key); err != nil {
+				return err
+			}
 			continue
 		}
 		for _, t := range strings.Split(tag, ",") {
-			indexMap[t] = i
+			if err := mapField(t); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -144,8 +158,10 @@ func (o Opts) Bind(v interface{}) error {
 			return newError("mapping of %q is not found in given struct, or is an unexported field", k)
 		}
 		field := structVal.Field(i)
-		// If the struct's field is already non-zero, then don't change it.
 		if !reflect.DeepEqual(field.Interface(), reflect.Zero(field.Type()).Interface()) {
+			// The struct's field is already non-zero (by our doing), so don't change it.
+			// This happens with comma separated tags, e.g. `docopt:"-h,--help"` which is a
+			// convenient way of checking if one of multiple boolean flags are set.
 			continue
 		}
 		optVal := reflect.ValueOf(v)
