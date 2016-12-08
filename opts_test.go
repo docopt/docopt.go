@@ -125,11 +125,12 @@ func TestOptsBind(t *testing.T) {
 	} {
 		result := testOptions{}
 		v, err := testParser.ParseArgs(usage, c.argv, "")
+		t.Logf("argv: %v opts: %v", c.argv, v)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("testcase: %d parse err: %q", i, err)
 		}
 		if err := v.Bind(&result); err != nil {
-			t.Fatal(err)
+			t.Fatalf("testcase: %d bind err: %q", i, err)
 		}
 		if reflect.DeepEqual(result, c.expect) != true {
 			t.Errorf("testcase: %d result: %#v expect: %#v\n", i, result, c.expect)
@@ -232,5 +233,20 @@ func TestBindSuccess(t *testing.T) {
 		if err := opts.Bind(&o); err != nil {
 			t.Fatalf("testcase: %d error: %q", i, err.Error())
 		}
+	}
+}
+
+func TestBindSimpleStruct(t *testing.T) {
+	var testParser = &Parser{HelpHandler: NoHelpHandler, SkipHelpFlags: true}
+	opts, err := testParser.ParseArgs("Usage: prog [--number=X]", []string{"--number=123"}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var opt struct{ Number int }
+	if err := opts.Bind(&opt); err != nil {
+		t.Fatal(err)
+	}
+	if opt.Number != 123 {
+		t.Fail()
 	}
 }
