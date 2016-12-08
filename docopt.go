@@ -15,7 +15,7 @@ type Parser struct {
 	// HelpHandler is called when we encounter bad user input, or when the user
 	// asks for help.
 	// By default, this calls os.Exit(0) if it handled a built-in option such
-	// as -h or --version. If the user errored with a wrong command or
+	// as -h, --help or --version. If the user errored with a wrong command or
 	// options, we exit with a return code of 1.
 	HelpHandler func(err error, usage string)
 	// OptionsFirst requires that option flags always come before positional

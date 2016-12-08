@@ -284,3 +284,37 @@ func TestBindToStructWhichAlreadyHasValue(t *testing.T) {
 		t.Fatal("error expected")
 	}
 }
+
+func TestBindDashTag(t *testing.T) {
+	var testParser = &Parser{HelpHandler: NoHelpHandler, SkipHelpFlags: true}
+	opts, err := testParser.ParseArgs("Usage: prog [-]", []string{"-"}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var opt struct {
+		Dash bool `docopt:"-"`
+	}
+	if err := opts.Bind(&opt); err != nil {
+		t.Fatal(err)
+	}
+	if !opt.Dash {
+		t.Fail()
+	}
+}
+
+func TestBindDoubleDashTag(t *testing.T) {
+	var testParser = &Parser{HelpHandler: NoHelpHandler, SkipHelpFlags: true}
+	opts, err := testParser.ParseArgs("Usage: prog [--]", []string{"--"}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var opt struct {
+		DoubleDash bool `docopt:"--"`
+	}
+	if err := opts.Bind(&opt); err != nil {
+		t.Fatal(err)
+	}
+	if !opt.DoubleDash {
+		t.Fail()
+	}
+}
