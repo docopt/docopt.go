@@ -52,7 +52,10 @@ func Parse(doc string, argv []string, help bool, version string,
 	args, output, err := parse(doc, argv, help, version, optionsFirst)
 	if _, ok := err.(*UserError); ok {
 		// the user gave us bad input
-		fmt.Fprintln(os.Stderr, output)
+		if help {
+			fmt.Fprintln(os.Stderr, output)
+		}
+		
 		if exitOk {
 			os.Exit(1)
 		}
