@@ -91,6 +91,18 @@ flag, _ := opts.Bool("--flag")
 secs, _ := opts.Int("<seconds>")
 ```
 
+Additionally, you can `Bind` these to a struct, assigning option values to the
+exported fields of that struct, all at once.
+
+```go
+var config struct {
+  Command string `docopt:"<cmd>"`
+  Tries   int    `docopt:"-n"`
+  Force   bool   // Gets the value of --force
+}
+opts.Bind(&config)
+```
+
 More documentation is available at [godoc.org](https://godoc.org/github.com/docopt/docopt-go).
 
 ## Unit Testing
