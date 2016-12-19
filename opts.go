@@ -131,8 +131,7 @@ func (o Opts) Bind(v interface{}) error {
 		}
 		tag := field.Tag.Get("docopt")
 		if tag == "" {
-			n := strings.ToLower(field.Name)
-			untagged[n] = i
+			untagged[field.Name] = i
 			continue
 		}
 		for _, t := range strings.Split(tag, ",") {
@@ -141,38 +140,23 @@ func (o Opts) Bind(v interface{}) error {
 	}
 
 	// Get the index of the struct field to use, based on the option key.
-	// Returns -1 if nothing is matched.
-	getFieldIndex := func(key string) int {
+	// Second argument is true/false on whether something was matched.
+	getFieldIndex := func(key string) (int, bool) {
 		if i, ok := tagged[key]; ok {
-			return i
+			return i, true
 		}
-		switch {
-		case strings.HasPrefix(key, "--") && len(key[2:]) > 1:
-			if i, ok := untagged[strings.ToLower(key[2:])]; ok {
-				return i
-			}
-		case strings.HasPrefix(key, "-") && len(key[1:]) == 1:
-			if i, ok := untagged[strings.ToLower(key[1:])]; ok {
-				return i
-			}
-		case strings.HasPrefix(key, "<") && strings.HasSuffix(key, ">"):
-			if i, ok := untagged[strings.ToLower(key[1:len(key)-1])]; ok {
-				return i
-			}
-		default:
-			if i, ok := untagged[strings.ToLower(key)]; ok {
-				return i
-			}
+		if i, ok := untagged[guessUntaggedField(key)]; ok {
+			return i, true
 		}
-		return -1
+		return -1, false
 	}
 
 	indexMap := make(map[string]int) // Option keys to field index
 
 	// Pre-check that option keys are mapped to fields and fields are zero valued, before populating them.
 	for k := range o {
-		i := getFieldIndex(k)
-		if i < 0 {
+		i, ok := getFieldIndex(k)
+		if !ok {
 			if k == "--help" || k == "--version" { // Don't require these to be mapped.
 				continue
 			}
@@ -247,4 +231,34 @@ func (o Opts) Bind(v interface{}) error {
 //   http://golang.org/ref/spec#Exported_identifiers
 func isUnexportedField(field reflect.StructField) bool {
 	return !(field.PkgPath == "" && unicode.IsUpper(rune(field.Name[0])))
+}
+
+// Convert a string like "--my-special-flag" to "MySpecialFlag".
+func titleCaseDashes(key string) string {
+	nextToUpper := true
+	mapFn := func(r rune) rune {
+		if r == '-' {
+			nextToUpper = true
+			return -1
+		}
+		if nextToUpper {
+			nextToUpper = false
+			return unicode.ToUpper(r)
+		}
+		return r
+	}
+	return strings.Map(mapFn, key)
+}
+
+// Best guess which field.Name in a struct to assign for an option key.
+func guessUntaggedField(key string) string {
+	switch {
+	case strings.HasPrefix(key, "--") && len(key[2:]) > 1:
+		return titleCaseDashes(key[2:])
+	case strings.HasPrefix(key, "-") && len(key[1:]) == 1:
+		return titleCaseDashes(key[1:])
+	case strings.HasPrefix(key, "<") && strings.HasSuffix(key, ">"):
+		key = key[1 : len(key)-1]
+	}
+	return strings.Title(strings.ToLower(key))
 }
