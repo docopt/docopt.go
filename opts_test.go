@@ -318,3 +318,21 @@ func TestBindDoubleDashTag(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestBindHyphenatedTags(t *testing.T) {
+	var testParser = &Parser{HelpHandler: NoHelpHandler, SkipHelpFlags: true}
+	opts, err := testParser.ParseArgs("Usage: prog --opt-one=N --opt-two=N", []string{"--opt-one", "123", "--opt-two", "234"}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var opt struct {
+		OptOne string
+		OptTwo string
+	}
+	if err := opts.Bind(&opt); err != nil {
+		t.Fatal(err)
+	}
+	if opt.OptOne != "123" || opt.OptTwo != "234" {
+		t.Fail()
+	}
+}
