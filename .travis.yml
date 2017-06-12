@@ -14,7 +14,6 @@ matrix:
 
 before_install:
     - go get golang.org/x/tools/cmd/cover
-    - go get github.com/golang/lint/golint
     - go get github.com/mattn/goveralls
 
 install:
@@ -22,7 +21,6 @@ install:
 
 script:
     - go vet -x ./...
-    - $HOME/gopath/bin/golint ./...
     - go test -v ./...
     - go test -covermode=count -coverprofile=profile.cov .
 
