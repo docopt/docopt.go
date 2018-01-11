@@ -59,13 +59,13 @@ func merge(mapA, mapB map[string]interface{}) map[string]interface{} {
 
 func main() {
 	usage := `Usage:
-  config_file_example tcp [<host>] [--force] [--timeout=<seconds>]
-  config_file_example serial <port> [--baud=<rate>] [--timeout=<seconds>]
-  config_file_example -h | --help | --version`
+  config_file tcp [<host>] [--force] [--timeout=<seconds>]
+  config_file serial <port> [--baud=<rate>] [--timeout=<seconds>]
+  config_file -h | --help | --version`
 
 	jsonConfig := loadJSONConfig()
 	iniConfig := loadIniConfig()
-	arguments, _ := docopt.Parse(usage, nil, true, "0.1.1rc", false)
+	arguments, _ := docopt.ParseArgs(usage, nil, "0.1.1rc")
 
 	// Arguments take priority over INI, INI takes priority over JSON
 	result := merge(arguments, merge(iniConfig, jsonConfig))

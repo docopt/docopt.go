@@ -9,11 +9,11 @@ func main() {
 	usage := `Example of program with many options using docopt.
 
 Usage:
-  options_example [-hvqrf NAME] [--exclude=PATTERNS]
+  options [-hvqrf NAME] [--exclude=PATTERNS]
                      [--select=ERRORS | --ignore=ERRORS] [--show-source]
                      [--statistics] [--count] [--benchmark] PATH...
-  options_example (--doctest | --testsuite=DIR)
-  options_example --version
+  options (--doctest | --testsuite=DIR)
+  options --version
 
 Arguments:
   PATH  destination path
@@ -38,6 +38,6 @@ Options:
   --testsuite=DIR      run regression tests from dir
   --doctest            run doctest on myself`
 
-	arguments, _ := docopt.Parse(usage, nil, true, "1.0.0rc2", false)
+	arguments, _ := docopt.ParseArgs(usage, nil, "1.0.0rc2")
 	fmt.Println(arguments)
 }

@@ -9,7 +9,7 @@ func main() {
 	usage := `Example of program which uses [options] shortcut in pattern.
 
 Usage:
-  options_shortcut_example [options] <port>
+  options_shortcut [options] <port>
 
 Options:
   -h --help                show this help message and exit
@@ -19,6 +19,6 @@ Options:
   --apply                  apply changes to database
   -q                       operate in quiet mode`
 
-	arguments, _ := docopt.Parse(usage, nil, true, "1.0.0rc2", false)
+	arguments, _ := docopt.ParseArgs(usage, nil, "1.0.0rc2")
 	fmt.Println(arguments)
 }

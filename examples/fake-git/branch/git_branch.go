@@ -1,4 +1,4 @@
-package git
+package main
 
 import (
 	"fmt"
@@ -33,6 +33,6 @@ Specific git-branch actions:
     --merged=<commit>     print only merged branches
 `
 
-	args, _ := docopt.Parse(usage, nil, true, "", false)
+	args, _ := docopt.ParseDoc(usage)
 	fmt.Println(args)
 }

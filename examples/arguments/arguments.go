@@ -5,9 +5,8 @@ import (
 	"github.com/docopt/docopt-go"
 )
 
-func main() {
-	usage := `Usage: arguments_example [-vqrh] [FILE] ...
-       arguments_example (--left | --right) CORRECTION FILE
+var usage = `Usage: arguments [-vqrh] [FILE] ...
+       arguments (--left | --right) CORRECTION FILE
 
 Process FILE and optionally apply correction to either left-hand side or
 right-hand side.
@@ -24,6 +23,7 @@ Options:
   --left   use left-hand side
   --right  use right-hand side`
 
-	arguments, _ := docopt.Parse(usage, nil, true, "", false)
+func main() {
+	arguments, _ := docopt.ParseDoc(usage)
 	fmt.Println(arguments)
 }

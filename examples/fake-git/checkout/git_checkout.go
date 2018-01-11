@@ -1,4 +1,4 @@
-package git
+package main
 
 import (
 	"fmt"
@@ -25,6 +25,6 @@ options:
     -p, --patch           select hunks interactively
 `
 
-	args, _ := docopt.Parse(usage, nil, true, "", false)
+	args, _ := docopt.ParseDoc(usage)
 	fmt.Println(args)
 }

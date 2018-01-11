@@ -30,14 +30,14 @@ The most commonly used git commands are:
 
 See 'git help <command>' for more information on a specific command.
 `
-	args, _ := docopt.Parse(usage, nil, true, "git version 1.7.4.4", true)
+	parser := &docopt.Parser{OptionsFirst: true}
+	args, _ := parser.ParseArgs(usage, nil, "git version 1.7.4.4")
 
-	fmt.Println("global arguments:")
-	fmt.Println(args)
-
-	fmt.Println("command arguments:")
 	cmd := args["<command>"].(string)
 	cmdArgs := args["<args>"].([]string)
+
+	fmt.Println("global arguments:", args)
+	fmt.Println("command arguments:", cmd, cmdArgs)
 
 	err := runCommand(cmd, cmdArgs)
 	if err != nil {
@@ -62,9 +62,7 @@ func goRun(scriptName string, args []string) (err error) {
 }
 
 func runCommand(cmd string, args []string) (err error) {
-	argv := make([]string, 1)
-	argv[0] = cmd
-	argv = append(argv, args...)
+	argv := append([]string{cmd}, args...)
 	switch cmd {
 	case "add":
 		// subcommand is a function call
@@ -77,7 +75,7 @@ func runCommand(cmd string, args []string) (err error) {
 		scriptName := fmt.Sprintf("%s/git_%s.go", cmd, cmd)
 		return goRun(scriptName, argv)
 	case "help", "":
-		return goRun("git.go", []string{"git_add.go", "--help"})
+		return goRun("git.go", append(argv[1:], "--help"))
 	}
 
 	return fmt.Errorf("%s is not a git command. See 'git help'", cmd)
@@ -102,7 +100,7 @@ options:
 	--ignore-missing     check if - even missing - files are ignored in dry run
 `
 
-	args, _ := docopt.Parse(usage, nil, true, "", false)
+	args, _ := docopt.ParseDoc(usage)
 	fmt.Println(args)
 	return
 }

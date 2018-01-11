@@ -1,4 +1,4 @@
-package git
+package main
 
 import (
 	"fmt"
@@ -29,6 +29,6 @@ options:
     --progress            force progress reporting
 `
 
-	args, _ := docopt.Parse(usage, nil, true, "", false)
+	args, _ := docopt.ParseDoc(usage)
 	fmt.Println(args)
 }

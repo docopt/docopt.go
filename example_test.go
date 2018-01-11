@@ -5,33 +5,65 @@ import (
 	"sort"
 )
 
-func ExampleParse() {
+func ExampleParseArgs() {
 	usage := `Usage:
-  config_example tcp [<host>] [--force] [--timeout=<seconds>]
-  config_example serial <port> [--baud=<rate>] [--timeout=<seconds>]
-  config_example -h | --help | --version`
-	// parse the command line `comfig_example tcp 127.0.0.1 --force`
+  example tcp [<host>...] [--force] [--timeout=<seconds>]
+  example serial <port> [--baud=<rate>] [--timeout=<seconds>]
+  example --help | --version`
+
+	// Parse the command line `example tcp 127.0.0.1 --force`
 	argv := []string{"tcp", "127.0.0.1", "--force"}
-	arguments, _ := Parse(usage, argv, true, "0.1.1rc", false)
-	// sort the keys of the arguments map
+	opts, _ := ParseArgs(usage, argv, "0.1.1rc")
+
+	// Sort the keys of the options map
 	var keys []string
-	for k := range arguments {
+	for k := range opts {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	// print the argument keys and values
+
+	// Print the option keys and values
 	for _, k := range keys {
-		fmt.Printf("%9s %v\n", k, arguments[k])
+		fmt.Printf("%9s %v\n", k, opts[k])
 	}
-	// output:
+
+	// Output:
 	//    --baud <nil>
 	//   --force true
 	//    --help false
 	// --timeout <nil>
 	// --version false
-	//        -h false
-	//    <host> 127.0.0.1
+	//    <host> [127.0.0.1]
 	//    <port> <nil>
 	//    serial false
 	//       tcp true
+}
+
+func ExampleOpts_Bind() {
+	usage := `Usage:
+  example tcp [<host>...] [--force] [--timeout=<seconds>]
+  example serial <port> [--baud=<rate>] [--timeout=<seconds>]
+  example --help | --version`
+
+	// Parse the command line `example serial 443 --baud=9600`
+	argv := []string{"serial", "443", "--baud=9600"}
+	opts, _ := ParseArgs(usage, argv, "0.1.1rc")
+
+	var conf struct {
+		Tcp     bool
+		Serial  bool
+		Host    []string
+		Port    int
+		Force   bool
+		Timeout int
+		Baud    int
+	}
+	opts.Bind(&conf)
+
+	if conf.Serial {
+		fmt.Printf("port: %d, baud: %d", conf.Port, conf.Baud)
+	}
+
+	// Output:
+	// port: 443, baud: 9600
 }
