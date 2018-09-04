@@ -209,8 +209,11 @@ func parseDefaults(doc string) patternList {
 	defaults := patternList{}
 	p := regexp.MustCompile(`\n[ \t]*(-\S+?)`)
 	for _, s := range parseSection("options:", doc) {
-		// FIXME corner case "bla: options: --foo"
-		_, _, s = stringPartition(s, ":") // get rid of "options:"
+		// Find the last "options:" and get rid of it
+		titles := regexp.MustCompile(`(?i)options:`).FindAllIndex([]byte(s), -1)
+		lastTitle := titles[len(titles)-1]
+		s = s[lastTitle[1]:]
+		// Split option lines
 		split := p.Split("\n"+s, -1)[1:]
 		match := p.FindAllStringSubmatch("\n"+s, -1)
 		for i := range split {
@@ -277,7 +280,17 @@ func parseArgv(tokens *tokenList, options *patternList, optionsFirst bool) (patt
 
 func parseOption(optionDescription string) *pattern {
 	optionDescription = strings.TrimSpace(optionDescription)
-	options, _, description := stringPartition(optionDescription, "  ")
+	// Allow both spaces and tabs to be used to seperate options from its description,
+	// except for one space alone
+	var options, description string
+	bound := regexp.MustCompile("( [ \t]+)|(\t[ \t]*)").FindIndex([]byte(optionDescription))
+	if bound == nil {
+		options = optionDescription
+		description = ""
+	} else {
+		options = optionDescription[:bound[0]]
+		description = optionDescription[bound[1]:]
+	}
 	options = strings.Replace(options, ",", " ", -1)
 	options = strings.Replace(options, "=", " ", -1)
 
