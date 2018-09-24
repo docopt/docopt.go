@@ -181,7 +181,15 @@ func parse(doc string, argv []string, help bool, version string, optionsFirst bo
 		return
 	}
 
-	err = newUserError("")
+	if len(*left) > 0 {
+		var left_names []string
+		for _, l := range(*left) {
+			left_names = append(left_names, l.name)
+		}
+		err = newUserError(fmt.Sprintf("Unknown option(s): %s", strings.Join(left_names, ", ")))
+	} else {
+		err = newUserError("")
+	}
 	output = handleError(err, usage)
 	return
 }
