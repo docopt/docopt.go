@@ -100,7 +100,7 @@ options:
 	--ignore-missing     check if - even missing - files are ignored in dry run
 `
 
-	args, _ := docopt.ParseDoc(usage)
+	args, _ := docopt.ParseArgs(usage, argv, "")
 	fmt.Println(args)
 	return
 }
