@@ -249,9 +249,6 @@ func (p *pattern) fixRepeatingArguments() {
 }
 
 func (p *pattern) match(left *patternList, collected *patternList) (bool, *patternList, *patternList) {
-	if len(*left) == 0 {
-		return false, left, collected
-	}
 	if collected == nil {
 		collected = &patternList{}
 	}
