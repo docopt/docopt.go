@@ -249,20 +249,21 @@ func (p *pattern) fixRepeatingArguments() {
 }
 
 func (p *pattern) match(left *patternList, collected *patternList) (bool, *patternList, *patternList) {
+	if len(*left) == 0 {
+		return false, left, collected
+	}
 	if collected == nil {
 		collected = &patternList{}
 	}
 	if p.t&patternRequired != 0 {
-		l := left
-		c := collected
 		for _, p := range p.children {
 			var matched bool
-			matched, l, c = p.match(l, c)
+			matched, left, collected = p.match(left, collected)
 			if !matched {
 				return false, left, collected
 			}
 		}
-		return true, l, c
+		return true, left, collected
 	} else if p.t&patternOptionAL != 0 || p.t&patternOptionSSHORTCUT != 0 {
 		for _, p := range p.children {
 			_, left, collected = p.match(left, collected)
@@ -272,24 +273,17 @@ func (p *pattern) match(left *patternList, collected *patternList) (bool, *patte
 		if len(p.children) != 1 {
 			panic("OneOrMore.match(): assert len(p.children) == 1")
 		}
-		l := left
-		c := collected
-		var lAlt *patternList
 		matched := true
 		times := 0
 		for matched {
 			// could it be that something didn't match but changed l or c?
-			matched, l, c = p.children[0].match(l, c)
+			matched, left, collected = p.children[0].match(left, collected)
 			if matched {
 				times++
 			}
-			if lAlt == l {
-				break
-			}
-			lAlt = l
 		}
 		if times >= 1 {
-			return true, l, c
+			return true, left, collected
 		}
 		return false, left, collected
 	} else if p.t&patternEither != 0 {
@@ -301,8 +295,9 @@ func (p *pattern) match(left *patternList, collected *patternList) (bool, *patte
 		}
 		outcomes := []outcomeStruct{}
 		for _, p := range p.children {
-			matched, l, c := p.match(left, collected)
-			outcome := outcomeStruct{matched, l, c, len(*l)}
+			var matched bool
+			matched, left, collected = p.match(left, collected)
+			outcome := outcomeStruct{matched, left, collected, len(*left)}
 			if matched {
 				outcomes = append(outcomes, outcome)
 			}
