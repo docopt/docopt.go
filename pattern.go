@@ -284,6 +284,8 @@ func (p *pattern) match(left *patternList, collected *patternList) (bool, *patte
 				times++
 			}
 			if lAlt == l {
+				*left = *l
+				*collected = *c
 				break
 			}
 			lAlt = l
