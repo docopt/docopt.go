@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/docopt/docopt-go"
+	"github.com/ps78674/docopt.go"
 )
 
 var usage = `Usage: arguments [-vqrh] [FILE] ...

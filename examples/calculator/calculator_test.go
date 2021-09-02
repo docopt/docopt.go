@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/docopt/docopt-go/examples"
+	"github.com/ps78674/docopt.go/examples"
 )
 
 func Example() {
