@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/docopt/docopt-go"
+	"github.com/docopt/docopt.go"
 )
 
 var usage = `Not a serious example.

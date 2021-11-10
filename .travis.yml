@@ -1,16 +1,14 @@
 # Travis CI (http://travis-ci.org/) is a continuous integration
 # service for open source projects. This file configures it
-# to run unit tests for docopt-go.
+# to run unit tests for docopt.go.
 
 language: go
 
 go:
-    - 1.4
-    - 1.5
-    - 1.6
-    - 1.7
-    - 1.8
-    - 1.9
+    - 1.14
+    - 1.15
+    - 1.16
+    - 1.17    
     - tip
 
 matrix:

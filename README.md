@@ -1,4 +1,4 @@
-docopt-go
+docopt.go
 =========
 
 [![Build Status](https://travis-ci.org/docopt/docopt.go.svg?branch=master)](https://travis-ci.org/docopt/docopt.go)
@@ -14,7 +14,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/docopt/docopt-go"
+	"github.com/docopt/docopt.go"
 )
 
 func main() {
@@ -44,16 +44,10 @@ Options:
 
 ## Installation
 
-⚠ Use the alias "docopt-go". To use docopt in your Go code:
-
-```go
-import "github.com/docopt/docopt-go"
-```
-
 To install docopt in your `$GOPATH`:
 
 ```console
-$ go get github.com/docopt/docopt-go
+$ go get github.com/docopt/docopt.go
 ```
 
 ## API
@@ -103,7 +97,7 @@ var config struct {
 opts.Bind(&config)
 ```
 
-More documentation is available at [godoc.org](https://godoc.org/github.com/docopt/docopt-go).
+More documentation is available at [godoc.org](https://pkg.go.dev/github.com/docopt/docopt.go).
 
 ## Unit Testing
 
