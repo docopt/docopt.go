@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestOptsUsage(t *testing.T) {
@@ -141,13 +142,14 @@ func TestOptsBind(t *testing.T) {
 type testTypedOptions struct {
 	secret int `docopt:"-s"`
 
-	V       bool
-	Number  int16
-	Idle    float32
-	Pointer uintptr     `docopt:"<ptr>"`
-	Ints    []int       `docopt:"<values>"`
-	Strings []string    `docopt:"STRINGS"`
-	Iface   interface{} `docopt:"IFACE"`
+	V        bool
+	Number   int16
+	Idle     float32
+	Pointer  uintptr     `docopt:"<ptr>"`
+	Ints     []int       `docopt:"<values>"`
+	Strings  []string    `docopt:"STRINGS"`
+	Iface    interface{} `docopt:"IFACE"`
+	Duration time.Duration
 }
 
 func TestBindErrors(t *testing.T) {
@@ -243,6 +245,10 @@ func TestBindSuccess(t *testing.T) {
 		{
 			`Usage: prog [--help]`,
 			`prog --help`,
+		},
+		{
+			`Usage: prog <duration>`,
+			`prog 10s`,
 		},
 	} {
 		argv := strings.Split(tc.command, " ")[1:]

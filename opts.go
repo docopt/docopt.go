@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 )
 
@@ -200,6 +201,15 @@ func (o Opts) Bind(v interface{}) error {
 		// Try to convert the value and assign if able.
 		switch field.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			ft := field.Type()
+			if ft.PkgPath() == "time" && ft.Name() == "Duration" {
+				if s, err := o.String(k); err == nil {
+					if d, err := time.ParseDuration(s); err == nil {
+						field.SetInt(int64(d))
+						continue
+					}
+				}
+			}
 			if x, err := o.Int(k); err == nil {
 				field.SetInt(int64(x))
 				continue
