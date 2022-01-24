@@ -1267,6 +1267,15 @@ func TestDefaultValueForPositionalArguments(t *testing.T) {
 	}
 }
 
+func TestEnvValueForPositionalArguments(t *testing.T) {
+	os.Setenv("DATA", "a b")
+	defer os.Unsetenv("DATA")
+	doc := "Usage: prog [--data=<data>...]\nOptions:\n\t-d --data=<arg>    Input data [env: DATA]"
+	if v, err := testParser.ParseArgs(doc, []string{}, ""); reflect.DeepEqual(v, Opts{"--data": []string{"a", "b"}}) != true {
+		t.Error(err)
+	}
+}
+
 func TestIssue59(t *testing.T) {
 	if v, err := testParser.ParseArgs("usage: prog --long=<a>", []string{"--long="}, ""); reflect.DeepEqual(v, Opts{"--long": ""}) != true {
 		t.Error(err)

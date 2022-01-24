@@ -287,7 +287,8 @@ func parseOption(optionDescription string) *pattern {
 	var value interface{}
 	value = false
 
-	reDefault := regexp.MustCompile(`(?i)\[default: (.*)\]`)
+	reDefault := regexp.MustCompile(`(?i)\[.*default: ([^,]*).*[\]]`)
+	reEnv := regexp.MustCompile(`(?i)\[.*env: ([^,]*).*[\]]`)
 	for _, s := range strings.Fields(options) {
 		if strings.HasPrefix(s, "--") {
 			long = s
@@ -297,10 +298,16 @@ func parseOption(optionDescription string) *pattern {
 			argcount = 1
 		}
 		if argcount > 0 {
-			matched := reDefault.FindAllStringSubmatch(description, -1)
-			if len(matched) > 0 {
+			if matched := reDefault.FindAllStringSubmatch(description, -1); len(matched) > 0 {
 				value = matched[0][1]
-			} else {
+			}
+			if matched := reEnv.FindAllStringSubmatch(description, -1); len(matched) > 0 {
+				v, ok := os.LookupEnv(matched[0][1])
+				if ok {
+					value = v
+				}
+			}
+			if value == false {
 				value = nil
 			}
 		}
