@@ -162,11 +162,12 @@ func (o Opts) Bind(v interface{}) error {
 			}
 			return newError("mapping of %q is not found in given struct, or is an unexported field", k)
 		}
-		fieldVal := structVal.Field(i)
-		zeroVal := reflect.Zero(fieldVal.Type())
-		if !reflect.DeepEqual(fieldVal.Interface(), zeroVal.Interface()) {
-			return newError("%q field is non-zero, will be overwritten by value of %q", structType.Field(i).Name, k)
-		}
+		// Allow use of non-zero struct fields for bind
+		// fieldVal := structVal.Field(i)
+		// zeroVal := reflect.Zero(fieldVal.Type())
+		// if !reflect.DeepEqual(fieldVal.Interface(), zeroVal.Interface()) {
+		// 	return newError("%q field is non-zero, will be overwritten by value of %q", structType.Field(i).Name, k)
+		// }
 		indexMap[k] = i
 	}
 

@@ -273,17 +273,18 @@ func TestBindSimpleStruct(t *testing.T) {
 	}
 }
 
-func TestBindToStructWhichAlreadyHasValue(t *testing.T) {
-	var testParser = &Parser{HelpHandler: NoHelpHandler, SkipHelpFlags: true}
-	opts, err := testParser.ParseArgs("Usage: prog [--number=X]", []string{"--number=123"}, "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var opt = struct{ Number int }{1}
-	if err := opts.Bind(&opt); err == nil {
-		t.Fatal("error expected")
-	}
-}
+// Allow use of non-zero struct fields for bind
+// func TestBindToStructWhichAlreadyHasValue(t *testing.T) {
+// 	var testParser = &Parser{HelpHandler: NoHelpHandler, SkipHelpFlags: true}
+// 	opts, err := testParser.ParseArgs("Usage: prog [--number=X]", []string{"--number=123"}, "")
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	var opt = struct{ Number int }{1}
+// 	if err := opts.Bind(&opt); err == nil {
+// 		t.Fatal("error expected")
+// 	}
+// }
 
 func TestBindDashTag(t *testing.T) {
 	var testParser = &Parser{HelpHandler: NoHelpHandler, SkipHelpFlags: true}
