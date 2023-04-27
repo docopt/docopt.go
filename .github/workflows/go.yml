@@ -21,5 +21,9 @@ jobs:
       run: go build -v .
       
     - name: Test
-      run: go test -v .
-      
+      run: go test -race -covermode atomic -coverprofile=covprofile .
+
+   - name: Send coverage
+      env:
+        COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+      run: goveralls -coverprofile=covprofile -service=github
