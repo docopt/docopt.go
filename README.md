@@ -1,7 +1,7 @@
 docopt-go
 =========
 
-[![Build Status](https://travis-ci.org/arnos/docopt.go.svg?branch=master)](https://travis-ci.org/arnos/docopt.go)
+[![Build Status](https://github.com/arnos/docopt-go/actions/workflows/go.yml/badge.svg)](https://github.com/arnos/docopt-go/actions)
 [![Coverage Status](https://coveralls.io/repos/github/arnos/docopt-go/badge.svg?branch=gitaction)](https://coveralls.io/github/arnos/docopt-go?branch=gitaction)
 [![GoDoc](https://godoc.org/github.com/arnos/docopt.go?status.svg)](https://godoc.org/github.com/arnos/docopt.go)
 
