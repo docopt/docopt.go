@@ -3,11 +3,7 @@
 
 name: Go
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+on: [push, pull_request]
 
 jobs:
 
@@ -22,15 +18,8 @@ jobs:
         go-version: 1.19
 
     - name: Build
-      run: go build -v ./...
-
-    - name: Test
-      run: go test -v ./...
+      run: go build -v .
       
-    - name: Install goveralls
-      run: go install github.com/mattn/goveralls@latest
-    
-    - name: Send coverage
-      env:
-        COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: goveralls -coverprofile=covprofile -service=github
+    - name: Test
+      run: go test -v .
+      
