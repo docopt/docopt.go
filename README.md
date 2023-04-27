@@ -1,9 +1,10 @@
-docopt-go
-=========
-
 [![Build Status](https://github.com/arnos/docopt-go/actions/workflows/go.yml/badge.svg)](https://github.com/arnos/docopt-go/actions)
 [![Coverage Status](https://coveralls.io/repos/github/arnos/docopt-go/badge.svg?branch=gitaction)](https://coveralls.io/github/arnos/docopt-go?branch=gitaction)
 [![GoDoc](https://godoc.org/github.com/arnos/docopt.go?status.svg)](https://godoc.org/github.com/arnos/docopt.go)
+
+
+docopt-go
+=========
 
 An implementation of [docopt](http://docopt.org/) for the [Go](http://golang.org/) programming language.
 
