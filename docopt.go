@@ -1,6 +1,7 @@
 // Licensed under terms of MIT license (see LICENSE-MIT)
 // Copyright (c) 2013 Keith Batten, kbatten@gmail.com
 // Copyright (c) 2016 David Irvine
+// Copyright (c) 2023 Arno Schulz
 
 package docopt
 

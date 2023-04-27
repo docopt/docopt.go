@@ -2,7 +2,7 @@
 Package docopt parses command-line arguments based on a help message.
 
 Given a conventional command-line help message, docopt processes the arguments.
-See https://github.com/docopt/docopt#help-message-format for a description of
+See https://github.com/arnos/docopt#help-message-format for a description of
 the help message format.
 
 This package exposes three different APIs, depending on the level of control
