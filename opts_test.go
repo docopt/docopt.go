@@ -1,6 +1,7 @@
 package docopt
 
 import (
+	"net"
 	"reflect"
 	"strings"
 	"testing"
@@ -143,6 +144,7 @@ type testTypedOptions struct {
 
 	V       bool
 	Number  int16
+	Ip      net.IP
 	Idle    float32
 	Pointer uintptr     `docopt:"<ptr>"`
 	Ints    []int       `docopt:"<values>"`
@@ -191,6 +193,11 @@ func TestBindErrors(t *testing.T) {
 			`Usage: prog [-] [IFACE ...]`,
 			`prog - 123 456 asd`,
 			`mapping of "-" is not found in given struct, or is an unexported field`,
+		},
+		{
+			`Usage: prog [--ip=IP]`,
+			`prog --ip=1.2.3.4.5`,
+			`value of "--ip" is not assignable to "Ip" field: invalid IP address: 1.2.3.4.5`,
 		},
 	} {
 		argv := strings.Split(tc.command, " ")[1:]
@@ -243,6 +250,22 @@ func TestBindSuccess(t *testing.T) {
 		{
 			`Usage: prog [--help]`,
 			`prog --help`,
+		},
+		{
+			`Usage: prog [--ip=X]`,
+			`prog`,
+		},
+		{
+			`Usage: prog [--ip=X]`,
+			`prog --ip=127.0.0.1`,
+		},
+		{
+			`Usage: prog <ip>`,
+			`prog 127.0.0.1`,
+		},
+		{
+			`Usage: prog IP`,
+			`prog 127.0.0.255`,
 		},
 	} {
 		argv := strings.Split(tc.command, " ")[1:]

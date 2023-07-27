@@ -1,6 +1,7 @@
 package docopt
 
 import (
+	"encoding"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -22,8 +23,8 @@ func errStrconv(key string, convErr error) error {
 // methods for value type conversion (bool, float64, int, string). For example,
 // to get an option value as an int:
 //
-//   opts, _ := docopt.ParseDoc("Usage: sleep <seconds>")
-//   secs, _ := opts.Int("<seconds>")
+//	opts, _ := docopt.ParseDoc("Usage: sleep <seconds>")
+//	secs, _ := opts.Int("<seconds>")
 //
 // Additionally, Opts.Bind allows you easily populate a struct's fields with the
 // values of each option value. See below for examples.
@@ -31,9 +32,9 @@ func errStrconv(key string, convErr error) error {
 // Lastly, you can still treat Opts as a regular map, and do any type checking
 // and conversion that you want to yourself. For example:
 //
-//   if s, ok := opts["<binary>"].(string); ok {
-//     if val, err := strconv.ParseUint(s, 2, 64); err != nil { ... }
-//   }
+//	if s, ok := opts["<binary>"].(string); ok {
+//	  if val, err := strconv.ParseUint(s, 2, 64); err != nil { ... }
+//	}
 //
 // Note that any non-boolean option / flag will have a string value in the
 // underlying map.
@@ -93,19 +94,23 @@ func (o Opts) Float64(key string) (f float64, err error) {
 // Each key in Opts will be mapped to an exported field of the struct pointed
 // to by `v`, as follows:
 //
-//   abc int                        // Unexported field, ignored
-//   Abc string                     // Mapped from `--abc`, `<abc>`, or `abc`
-//                                  // (case insensitive)
-//   A string                       // Mapped from `-a`, `<a>` or `a`
-//                                  // (case insensitive)
-//   Abc int  `docopt:"XYZ"`        // Mapped from `XYZ`
-//   Abc bool `docopt:"-"`          // Mapped from `-`
-//   Abc bool `docopt:"-x,--xyz"`   // Mapped from `-x` or `--xyz`
-//                                  // (first non-zero value found)
+//	abc int                        // Unexported field, ignored
+//	Abc string                     // Mapped from `--abc`, `<abc>`, or `abc`
+//	                               // (case insensitive)
+//	A string                       // Mapped from `-a`, `<a>` or `a`
+//	                               // (case insensitive)
+//	Abc int  `docopt:"XYZ"`        // Mapped from `XYZ`
+//	Abc bool `docopt:"-"`          // Mapped from `-`
+//	Abc bool `docopt:"-x,--xyz"`   // Mapped from `-x` or `--xyz`
+//	                               // (first non-zero value found)
+//	Abc net.IP `docopt:"--ip"`     // Mapped from `--ip`
 //
 // Tagged (annotated) fields will always be mapped first. If no field is tagged
 // with an option's key, Bind will try to map the option to an appropriately
 // named field (as above).
+//
+// If the field implements encoding.TextUnmarshaler, the option value will be
+// passed to its UnmarshalText method.
 //
 // Bind also handles conversion to bool, float, int or string types.
 func (o Opts) Bind(v interface{}) error {
@@ -196,6 +201,26 @@ func (o Opts) Bind(v interface{}) error {
 			field.Set(optVal)
 			continue
 		}
+
+		// try to assign to a TextUnmarshaler
+		if field.CanAddr() && field.Addr().CanInterface() {
+			if x, ok := field.Addr().Interface().(encoding.TextUnmarshaler); ok {
+				if text, err := o.String(k); err == nil {
+					err := x.UnmarshalText([]byte(text))
+					if err != nil {
+						return newError(
+							"value of %q is not assignable to %q field: %w",
+							k,
+							structType.Field(i).Name,
+							err,
+						)
+					}
+
+					continue
+				}
+			}
+		}
+
 		// Try to convert the value and assign if able.
 		switch field.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -227,8 +252,9 @@ func (o Opts) Bind(v interface{}) error {
 // isUnexportedField returns whether the field is unexported.
 // isUnexportedField is to avoid the bug in versions older than Go1.3.
 // See following links:
-//   https://code.google.com/p/go/issues/detail?id=7247
-//   http://golang.org/ref/spec#Exported_identifiers
+//
+//	https://code.google.com/p/go/issues/detail?id=7247
+//	http://golang.org/ref/spec#Exported_identifiers
 func isUnexportedField(field reflect.StructField) bool {
 	return !(field.PkgPath == "" && unicode.IsUpper(rune(field.Name[0])))
 }

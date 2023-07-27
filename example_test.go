@@ -2,6 +2,7 @@ package docopt
 
 import (
 	"fmt"
+	"net"
 	"sort"
 )
 
@@ -40,10 +41,17 @@ func ExampleParseArgs() {
 }
 
 func ExampleOpts_Bind() {
-	usage := `Usage:
-  example tcp [<host>...] [--force] [--timeout=<seconds>]
+	usage := `docopt-go example
+
+Usage:
+  example tcp [<host>...] [--force] [--timeout=<seconds>] [--gateway=<ip>]
   example serial <port> [--baud=<rate>] [--timeout=<seconds>]
-  example --help | --version`
+  example --help | --version
+
+Options:
+  --gateway <ip>  Set the gateway IP address [default: 192.168.0.1]
+  -h --help       Show this screen.
+`
 
 	// Parse the command line `example serial 443 --baud=9600`
 	argv := []string{"serial", "443", "--baud=9600"}
@@ -57,13 +65,19 @@ func ExampleOpts_Bind() {
 		Force   bool
 		Timeout int
 		Baud    int
+		Gateway net.IP
 	}
 	opts.Bind(&conf)
 
 	if conf.Serial {
-		fmt.Printf("port: %d, baud: %d", conf.Port, conf.Baud)
+		fmt.Printf(
+			"port: %d, baud: %d, gateway: %v",
+			conf.Port,
+			conf.Baud,
+			conf.Gateway,
+		)
 	}
 
 	// Output:
-	// port: 443, baud: 9600
+	// port: 443, baud: 9600, gateway: 192.168.0.1
 }
