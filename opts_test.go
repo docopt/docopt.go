@@ -1,6 +1,7 @@
 package docopt
 
 import (
+	"net"
 	"reflect"
 	"strings"
 	"testing"
@@ -143,6 +144,7 @@ type testTypedOptions struct {
 
 	V       bool
 	Number  int16
+	Ip      net.IP
 	Idle    float32
 	Pointer uintptr     `docopt:"<ptr>"`
 	Ints    []int       `docopt:"<values>"`
@@ -192,21 +194,28 @@ func TestBindErrors(t *testing.T) {
 			`prog - 123 456 asd`,
 			`mapping of "-" is not found in given struct, or is an unexported field`,
 		},
+		{
+			`Usage: prog [--ip=IP]`,
+			`prog --ip=1.2.3.4.5`,
+			`value of "--ip" is not assignable to "Ip" field: invalid IP address: 1.2.3.4.5`,
+		},
 	} {
-		argv := strings.Split(tc.command, " ")[1:]
-		opts, err := testParser.ParseArgs(tc.usage, argv, "")
-		if err != nil {
-			t.Fatalf("testcase: %d parse err: %q", i, err)
-		}
-		var o testTypedOptions
-		t.Logf("%#v\n", opts)
-		if err := opts.Bind(&o); err != nil {
-			if err.Error() != tc.expectedErr {
-				t.Fatalf("testcase: %d result: %q expect: %q", i, err.Error(), tc.expectedErr)
+		t.Run(tc.usage, func(t *testing.T) {
+			argv := strings.Split(tc.command, " ")[1:]
+			opts, err := testParser.ParseArgs(tc.usage, argv, "")
+			if err != nil {
+				t.Fatalf("testcase: %d parse err: %q", i, err)
 			}
-		} else {
-			t.Fatal("error expected")
-		}
+			var o testTypedOptions
+			t.Logf("%#v\n", opts)
+			if err := opts.Bind(&o); err != nil {
+				if err.Error() != tc.expectedErr {
+					t.Fatalf("testcase: %d result: %q expect: %q", i, err.Error(), tc.expectedErr)
+				}
+			} else {
+				t.Fatal("error expected")
+			}
+		})
 	}
 }
 
@@ -243,6 +252,22 @@ func TestBindSuccess(t *testing.T) {
 		{
 			`Usage: prog [--help]`,
 			`prog --help`,
+		},
+		{
+			`Usage: prog [--ip=X]`,
+			`prog`,
+		},
+		{
+			`Usage: prog [--ip=X]`,
+			`prog --ip=127.0.0.1`,
+		},
+		{
+			`Usage: prog <ip>`,
+			`prog 127.0.0.1`,
+		},
+		{
+			`Usage: prog IP`,
+			`prog 127.0.0.255`,
 		},
 	} {
 		argv := strings.Split(tc.command, " ")[1:]
