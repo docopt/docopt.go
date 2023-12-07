@@ -1,9 +1,9 @@
 docopt-go
 =========
 
-[![Build Status](https://travis-ci.org/docopt/docopt.go.svg?branch=master)](https://travis-ci.org/docopt/docopt.go)
-[![Coverage Status](https://coveralls.io/repos/github/docopt/docopt.go/badge.svg)](https://coveralls.io/github/docopt/docopt.go)
-[![GoDoc](https://godoc.org/github.com/docopt/docopt.go?status.svg)](https://godoc.org/github.com/docopt/docopt.go)
+[![Build Status](https://travis-ci.org/kovetskiy/docopt-go.svg?branch=master)](https://travis-ci.org/kovetskiy/docopt-go)
+[![Coverage Status](https://coveralls.io/repos/github/kovetskiy/docopt-go/badge.svg)](https://coveralls.io/github/kovetskiy/docopt-go)
+[![GoDoc](https://godoc.org/github.com/kovetskiy/docopt-go?status.svg)](https://godoc.org/github.com/kovetskiy/docopt-go)
 
 An implementation of [docopt](http://docopt.org/) in the [Go](http://golang.org/) programming language.
 
@@ -14,7 +14,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/docopt/docopt-go"
+	"github.com/kovetskiy/docopt-go"
 )
 
 func main() {
@@ -47,13 +47,13 @@ Options:
 ⚠ Use the alias "docopt-go". To use docopt in your Go code:
 
 ```go
-import "github.com/docopt/docopt-go"
+import "github.com/kovetskiy/docopt-go"
 ```
 
 To install docopt in your `$GOPATH`:
 
 ```console
-$ go get github.com/docopt/docopt-go
+$ go get github.com/kovetskiy/docopt-go
 ```
 
 ## API
@@ -103,7 +103,7 @@ var config struct {
 opts.Bind(&config)
 ```
 
-More documentation is available at [godoc.org](https://godoc.org/github.com/docopt/docopt-go).
+More documentation is available at [godoc.org](https://godoc.org/github.com/kovetskiy/docopt-go).
 
 ## Unit Testing
 
@@ -111,6 +111,6 @@ Unit testing your own usage docs is recommended, so you can be sure that for a g
 
 ## Tests
 
-All tests from the Python version are implemented and passing at [Travis CI](https://travis-ci.org/docopt/docopt-go). New language-agnostic tests have been added to [test_golang.docopt](test_golang.docopt).
+All tests from the Python version are implemented and passing at [Travis CI](https://travis-ci.org/kovetskiy/docopt-go). New language-agnostic tests have been added to [test_golang.docopt](test_golang.docopt).
 
 To run tests for docopt-go, use `go test`.
