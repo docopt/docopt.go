@@ -233,16 +233,38 @@ func (o Opts) Bind(v interface{}) error {
 				field.SetFloat(x)
 				continue
 			}
+
+		case reflect.Slice:
+			if vs, ok := v.([]string); ok {
+				if x, ok := findUnmarshaler(field); ok {
+					result := reflect.MakeSlice(field.Type(), 0, len(vs))
+					for _, optVal := range vs {
+						err := x.UnmarshalText([]byte(optVal))
+						if err != nil {
+							return newError(
+								"value of %q is not assignable to %q field: %w",
+								k,
+								structType.Field(i).Name,
+								err,
+							)
+						}
+
+						rex := reflect.ValueOf(x)
+
+						if rex.Kind() == reflect.Ptr {
+							rex = rex.Elem()
+						}
+
+						result = reflect.Append(result, rex)
+					}
+
+					field.Set(result)
+
+					continue
+				}
+			}
 		}
-		// TODO: Something clever (recursive?) with non-string slices.
-		// case reflect.Slice:
-		// 	if optVal.Kind() == reflect.Slice {
-		// 		for i := 0; i < optVal.Len(); i++ {
-		// 			sliceVal := optVal.Index(i)
-		// 			fmt.Printf("%v", sliceVal)
-		// 		}
-		// 		fmt.Printf("\n")
-		// 	}
+
 		return newError("value of %q is not assignable to %q field", k, structType.Field(i).Name)
 	}
 
@@ -286,5 +308,36 @@ func guessUntaggedField(key string) string {
 	case strings.HasPrefix(key, "<") && strings.HasSuffix(key, ">"):
 		key = key[1 : len(key)-1]
 	}
+
 	return strings.Title(strings.ToLower(key))
+}
+
+func findUnmarshaler(field reflect.Value) (encoding.TextUnmarshaler, bool) {
+	var x any
+
+	if field.CanAddr() {
+		x = field.Addr()
+	}
+
+	if field.CanInterface() {
+		x = field.Interface()
+	}
+
+	underlying := reflect.TypeOf(x)
+
+	if underlying.Kind() == reflect.Ptr {
+		underlying = underlying.Elem()
+	}
+
+	if underlying.Kind() == reflect.Slice {
+		underlying = underlying.Elem()
+	}
+
+	x = reflect.New(underlying).Interface()
+
+	if unmarshaler, ok := x.(encoding.TextUnmarshaler); ok {
+		return unmarshaler, true
+	}
+
+	return nil, false
 }

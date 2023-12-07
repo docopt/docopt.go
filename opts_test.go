@@ -200,20 +200,22 @@ func TestBindErrors(t *testing.T) {
 			`value of "--ip" is not assignable to "Ip" field: invalid IP address: 1.2.3.4.5`,
 		},
 	} {
-		argv := strings.Split(tc.command, " ")[1:]
-		opts, err := testParser.ParseArgs(tc.usage, argv, "")
-		if err != nil {
-			t.Fatalf("testcase: %d parse err: %q", i, err)
-		}
-		var o testTypedOptions
-		t.Logf("%#v\n", opts)
-		if err := opts.Bind(&o); err != nil {
-			if err.Error() != tc.expectedErr {
-				t.Fatalf("testcase: %d result: %q expect: %q", i, err.Error(), tc.expectedErr)
+		t.Run(tc.usage, func(t *testing.T) {
+			argv := strings.Split(tc.command, " ")[1:]
+			opts, err := testParser.ParseArgs(tc.usage, argv, "")
+			if err != nil {
+				t.Fatalf("testcase: %d parse err: %q", i, err)
 			}
-		} else {
-			t.Fatal("error expected")
-		}
+			var o testTypedOptions
+			t.Logf("%#v\n", opts)
+			if err := opts.Bind(&o); err != nil {
+				if err.Error() != tc.expectedErr {
+					t.Fatalf("testcase: %d result: %q expect: %q", i, err.Error(), tc.expectedErr)
+				}
+			} else {
+				t.Fatal("error expected")
+			}
+		})
 	}
 }
 
